@@ -1,0 +1,1063 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Найм лучших талантов</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Lora:wght@600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: sticky TOC rail on the left (desktop) + reading column ≈68ch; the TOC folds into a <details> above the text on phones */
+:root{
+  --bg:#f5f7fa; --surface:#ffffff; --fg:#17202e; --muted:#5d6779; --line:#d8dee8; --line-strong:#b9c3d1;
+  --accent:#0b6b6d; --accent-ink:#ffffff; --accent-soft:#e2f0ef;
+  --good:#1e7a3e; --good-soft:#e3f3e8; --avg:#9a5a00; --avg-soft:#fbefd9; --bad:#a93434; --bad-soft:#fbe3e3;
+  --display:"Lora",Georgia,"Times New Roman",serif;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e131b;--surface:#161c27;--fg:#e7ecf3;--muted:#9ca8ba;--line:#293345;--line-strong:#3b4759;--accent:#52c4c1;--accent-ink:#062221;--accent-soft:#143234;--good:#72d094;--good-soft:#153021;--avg:#e9b765;--avg-soft:#33270f;--bad:#f09090;--bad-soft:#3b1a1a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e131b;--surface:#161c27;--fg:#e7ecf3;--muted:#9ca8ba;--line:#293345;--line-strong:#3b4759;--accent:#52c4c1;--accent-ink:#062221;--accent-soft:#143234;--good:#72d094;--good-soft:#153021;--avg:#e9b765;--avg-soft:#33270f;--bad:#f09090;--bad-soft:#3b1a1a;color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 var(--body);font-variant-numeric:tabular-nums}
+a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:2px}
+a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:clamp(16px,4vw,40px);padding-block:0 64px}
+.masthead{padding-block:40px 28px;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font:700 clamp(32px,5vw,52px)/1.1 var(--display);margin:10px 0 8px;text-wrap:balance;letter-spacing:-.01em}
+.subtitle{font-size:clamp(18px,2.2vw,22px);color:var(--muted);margin:0 0 18px;font-weight:500}
+.source{font-size:14px;color:var(--muted);max-width:72ch}
+.shell{display:grid;grid-template-columns:260px minmax(0,1fr);gap:48px;align-items:start;padding-top:28px}
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);font-size:14px}
+.toc summary{display:none}
+.toc .toc-head{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:0 10px 10px}
+.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.toc a{display:grid;grid-template-columns:26px 1fr;gap:8px;padding:7px 10px;border-radius:6px;color:var(--fg);text-decoration:none;border-left:2px solid transparent}
+.toc a .n{font-family:var(--mono);font-size:12px;color:var(--muted);padding-top:3px}
+.toc a:hover{background:var(--surface)}
+.toc a.active{background:var(--accent-soft);border-left-color:var(--accent)}
+main{min-width:0}
+.section{padding-block:28px 48px;border-bottom:1px solid var(--line)}
+.sec-no{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:500}
+h2{font:700 clamp(26px,3.2vw,36px)/1.15 var(--display);margin:6px 0 18px;text-wrap:balance}
+h3{font:600 21px/1.3 var(--body);margin:36px 0 12px;text-wrap:balance}
+h4{font:600 17px/1.35 var(--body);margin:26px 0 10px;text-wrap:balance}
+p,li{max-width:68ch}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 16px;padding-left:22px}
+li{margin-bottom:6px}
+li>ul{margin-top:6px}
+strong{font-weight:600}
+.lbl{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.glance{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:18px 20px;margin:0 0 28px}
+.glance .lbl{color:var(--accent);margin-bottom:8px}
+.glance ul{margin:0;padding-left:20px}
+.glance li{margin-bottom:8px}
+.fig{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;margin:18px 0 24px}
+.fig-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px 16px;margin-bottom:14px}
+.fig-title{font-weight:600;font-size:17px;margin:0;text-wrap:balance}
+.dur{font-family:var(--mono);font-size:13px;color:var(--accent);background:var(--accent-soft);padding:3px 9px;border-radius:999px;white-space:nowrap}
+.fig-cap{font-size:13px;color:var(--muted);margin-top:12px}
+.compare{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.col{border:1px solid var(--line);border-radius:8px;padding:14px 16px;min-width:0}
+.col h5{margin:0 0 10px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.col.good h5{color:var(--good)}.col.avg h5{color:var(--avg)}
+.col ul{margin:0;padding-left:18px}
+.col li{margin-bottom:6px;font-size:15px}
+.prob{font-style:italic;background:var(--accent-soft);border-radius:8px;padding:12px 16px;margin:0 0 14px;max-width:none}
+.prob .lbl{font-style:normal;display:block;margin-bottom:4px}
+.scroll{overflow-x:auto;margin:14px 0 22px;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:15px;background:var(--surface);border:1px solid var(--line)}
+th,td{padding:10px 12px;text-align:left;vertical-align:top;border-top:1px solid var(--line);min-width:9em}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--bg);border-top:0}
+td ul{margin:0;padding-left:18px}
+td li{margin-bottom:4px;max-width:none}
+td.c,th.c{text-align:center}
+.lv{display:inline-block;font-size:13px;padding:2px 8px;border-radius:999px;border:1px solid var(--line-strong);white-space:nowrap}
+.lv.na{color:var(--muted);border-style:dashed}
+.pt{font-family:var(--mono);font-size:13px;white-space:nowrap}
+.pt.neg{color:var(--bad)}
+.steps{list-style:none;padding:0;margin:0 0 20px;counter-reset:s}
+.steps>li{counter-increment:s;display:grid;grid-template-columns:40px minmax(0,1fr);gap:14px;padding:14px 0;border-top:1px solid var(--line);max-width:none}
+.steps>li:first-child{border-top:0}
+.steps>li::before{content:"0" counter(s);font-family:var(--mono);font-size:13px;color:var(--accent);padding-top:3px}
+.steps b{display:block;font-weight:600;margin-bottom:3px}
+.steps .own{display:inline-block;margin-top:6px;font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:14px 0 22px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.kpi .k{color:var(--accent)}
+.kpi .v{font:700 19px/1.3 var(--display);margin:6px 0}
+.kpi .d{font-size:14px;color:var(--muted)}
+.note{border:1px dashed var(--line-strong);border-radius:8px;padding:14px 18px;margin:18px 0 22px;background:var(--surface)}
+.note .lbl{margin-bottom:6px}
+.chart{width:100%;max-width:560px;height:auto;display:block;margin:0 auto}
+.chart text{font-family:var(--body);font-size:12px;fill:var(--muted)}
+.chart .ax{stroke:var(--line-strong);stroke-width:1.2;fill:none}
+.chart .exp{stroke:var(--accent);stroke-width:2.4;fill:none}
+.chart .lin{stroke:var(--muted);stroke-width:2;fill:none;stroke-dasharray:5 4}
+.chart .dot{stroke:var(--surface);stroke-width:2}
+.chart .dot.a{fill:var(--good)}.chart .dot.b{fill:var(--bad)}
+.profiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:14px 0 22px}
+.pcard{border:1px solid var(--line);border-radius:10px;padding:16px;background:var(--surface);min-width:0}
+.tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;margin-bottom:8px}
+.tag.fit{color:var(--good);background:var(--good-soft)}.tag.nofit{color:var(--bad);background:var(--bad-soft)}
+.pcard b{display:block;font-size:17px;margin-bottom:6px}
+.pcard p{font-size:14px;margin:0 0 6px;color:var(--muted)}
+.formula{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-weight:600;margin:14px 0}
+.formula .op{font-family:var(--mono);color:var(--accent);font-size:20px}
+.formula .box{border:1px solid var(--line-strong);border-radius:8px;padding:8px 12px;background:var(--surface)}
+.formula small{display:block;font-weight:400;color:var(--muted);font-size:13px}
+.org{list-style:none;padding:0;margin:0 0 20px}
+.org ul{list-style:none;padding-left:22px;margin:6px 0 0;border-left:1px solid var(--line-strong)}
+.org li{margin:4px 0;padding-left:10px;max-width:none}
+.org .r{color:var(--muted);font-size:14px}
+.overview{display:grid;gap:18px;margin:18px 0 10px}
+.ov{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+.ov h3{margin:0 0 10px;font-size:18px}
+.ov ul{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.ov li{display:grid;grid-template-columns:22px 1fr;gap:10px;max-width:none}
+.ov li::before{content:"✓";color:var(--good);font-weight:700}
+.ov .go{display:inline-block;margin-top:4px;font-size:13px;font-weight:600}
+.cta{display:inline-block;background:var(--accent);color:var(--accent-ink);padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600;margin:6px 0 16px}
+footer.end{padding-block:28px;color:var(--muted);font-size:14px}
+@media (max-width:860px){
+  .shell{grid-template-columns:1fr;gap:20px}
+  .toc{position:static}
+  .toc details{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:6px 10px}
+  .toc summary{display:list-item;cursor:pointer;font-weight:600;padding:6px 0}
+  .toc .toc-head{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="masthead">
+  <div class="eyebrow">Плейбук QuantumLight Capital · Перевод на русский язык</div>
+  <h1>Найм лучших талантов</h1>
+  <p class="subtitle">Протоколы безупречного рекрутинга</p>
+  <p class="source">Полный перевод плейбука «Hiring Top Talent» фонда QuantumLight Capital — обзор и все семь разделов. Оригинал на английском: <a href="https://quantumlightcapital.com/playbooks/hiring">quantumlightcapital.com/playbooks/hiring</a>. Права на исходный текст принадлежат QuantumLight Capital; перевод подготовлен для ознакомления.</p>
+</header>
+
+<div class="shell">
+<nav class="toc" aria-label="Содержание">
+  <details open id="tocbox">
+    <summary>Содержание</summary>
+    <div class="toc-head">Содержание</div>
+    <ol>
+      <li><a href="#overview"><span class="n">00</span><span>Обзор плейбука</span></a></li>
+      <li><a href="#s1"><span class="n">01</span><span>Профили, готовые к скейлапу</span></a></li>
+      <li><a href="#s2"><span class="n">02</span><span>Три интервью для успеха</span></a></li>
+      <li><a href="#s3"><span class="n">03</span><span>Фреймворк талантов</span></a></li>
+      <li><a href="#s4"><span class="n">04</span><span>Стандартизированный процесс найма</span></a></li>
+      <li><a href="#s5"><span class="n">05</span><span>Команда рекрутинга</span></a></li>
+      <li><a href="#s6"><span class="n">06</span><span>Пример плейбука | Дата-инженеры</span></a></li>
+      <li><a href="#s7"><span class="n">07</span><span>В фокусе | Revolut People</span></a></li>
+    </ol>
+  </details>
+</nav>
+
+<main>
+<section class="section" id="overview">
+  <div class="sec-no">00</div>
+  <h2>Обзор плейбука</h2>
+  <p>Плейбук отвечает на три вопроса: как распознать лучших кандидатов, как нанимать их в масштабе и как построить команду, которая будет это делать. Каждый тезис ниже раскрыт в соответствующем разделе.</p>
+  <div class="overview">
+    <div class="ov">
+      <h3>Выявляйте лучшие таланты</h3>
+      <ul>
+        <li><span>Отдавайте предпочтение амбициозным специалистам на раннем этапе карьеры, сильным в решении проблем, которые расцветают в динамичной среде и умеют строить высокоэффективные команды, — а не «корпоративным» профилям. <a class="go" href="#s1">01 Профили, готовые к скейлапу →</a></span></li>
+        <li><span>Лучших кандидатов отличают три интервью, выходящие за рамки проверки навыков: на решение проблем, бар-рейзер (ценности и достижения) и — для руководителей — на управление людьми и найм. <a class="go" href="#s2">02 Три интервью для успеха →</a></span></li>
+      </ul>
+    </div>
+    <div class="ov">
+      <h3>Нанимайте в масштабе</h3>
+      <ul>
+        <li><span>Закрепите каждую роль в организации за владельцем роли, который определяет требуемые навыки и планку таланта и проектирует процесс интервью. <a class="go" href="#s3">03 Фреймворк талантов →</a></span></li>
+        <li><span>Выработайте стандартизированный подход к каждому шагу рекрутинга — он позволит удерживать высокую планку таланта по мере роста компании. <a class="go" href="#s4">04 Стандартизированный процесс найма →</a></span></li>
+      </ul>
+    </div>
+    <div class="ov">
+      <h3>Постройте команду</h3>
+      <ul>
+        <li><span>Создайте команду рекрутинга по образцу отдела продаж — с денежными бонусами за выполнение квартальных квот — и масштабируйте её по мере роста потребностей в найме. <a class="go" href="#s5">05 Команда рекрутинга →</a></span></li>
+        <li><span>Посмотрите, как всё это собирается воедино на примере конкретной роли, и познакомьтесь с инструментом, на котором построен найм в Revolut. <a class="go" href="#s6">06 Пример плейбука | Дата-инженеры →</a> <a class="go" href="#s7">07 В фокусе | Revolut People →</a></span></li>
+      </ul>
+    </div>
+  </div>
+  <p>Когда правильная команда нанята, удержание высокой результативности становится отдельной задачей. О том, как её решать, рассказывает плейбук QuantumLight <a href="https://quantumlightcapital.com/playbooks/performance-management">«Driving High Performance» (Управление высокой результативностью)</a>.</p>
+</section>
+
+<section class="section" id="s1">
+  <div class="sec-no">01</div>
+  <h2>Профили, готовые к скейлапу</h2>
+  <div class="glance">
+    <div class="lbl">Раздел вкратце</div>
+    <ul>
+      <li>Отношение к делу и способность решать проблемы важнее опыта: всегда выбирайте сильных «решателей проблем» с установкой «могу и сделаю», а не «корпоративные» профили с большим стажем.</li>
+      <li>Ваша цель — нанимать топ-руководителей до того, как они станут топ-руководителями: ищите людей в начале карьеры с быстрой восходящей траекторией.</li>
+      <li>Кандидатов, способных преуспеть в скейлапе (компании на стадии быстрого масштабирования), отличают три характеристики:
+        <ul>
+          <li>сильное мышление решателя проблем — способность браться за задачи, с которыми они никогда прежде не сталкивались;</li>
+          <li>история достижений и внутренний драйв;</li>
+          <li>способность поднимать планку таланта компании и собирать команду из A-игроков (сильнейших специалистов).</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+
+  <h3>Потенциал важнее опыта</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Профили, готовые к скейлапу, находятся на экспоненциальной карьерной траектории</p></div>
+    <svg class="chart" viewBox="0 0 560 300" role="img" aria-label="Схема: уровень достижений в зависимости от опыта. Экспоненциальная траектория против линейной; три профиля кандидатов отмечены точками.">
+      <path class="ax" d="M60 30 V250 H530"/>
+      <text x="18" y="24">Уровень достижений</text>
+      <text x="500" y="282">Опыт</text>
+      <path class="ax" d="M273.6 250 v6 M487.3 250 v6"/>
+      <text x="256" y="272">10 лет</text>
+      <text x="470" y="272">20 лет</text>
+      <polyline class="lin" points="60,250 530,150"/>
+      <polyline class="exp" points="60,250 102.7,248.2 145.5,245.7 188.2,242.1 230.9,236.9 273.6,229.4 316.4,218.7 359.1,203.4 401.8,181.4 444.5,150 487.3,104.8 530,40"/>
+      <text x="536" y="44" style="fill:var(--accent)">экспонента</text>
+      <text x="536" y="154">линейно</text>
+      <circle class="dot a" cx="273.6" cy="229.4" r="7"/>
+      <text x="262" y="214" style="font-weight:600;fill:var(--fg)">01</text>
+      <circle class="dot b" cx="423.2" cy="167.1" r="7"/>
+      <text x="398" y="160" style="font-weight:600;fill:var(--fg)">02</text>
+      <circle class="dot b" cx="487.3" cy="159.1" r="7"/>
+      <text x="480" y="184" style="font-weight:600;fill:var(--fg)">03</text>
+    </svg>
+    <p class="fig-cap">Примеры профилей кандидатов</p>
+    <div class="profiles">
+      <div class="pcard"><span class="tag fit">01 · Подходит</span><b>Готов к скейлапу</b><p>Амбициозный решатель проблем с историей достижений.</p><p>2–3 года индивидуальным специалистом или 7–8 лет руководства небольшой командой в быстрорастущем стартапе.</p></div>
+      <div class="pcard"><span class="tag nofit">02 · Не подходит</span><b>Состоявшийся</b><p>«Дорогой» состоявшийся руководитель с ограниченной амбицией расти дальше.</p><p>20+ лет опыта, руководил крупным департаментом в big tech.</p></div>
+      <div class="pcard"><span class="tag nofit">03 · Не подходит</span><b>Традиционный</b><p>«Корпоративный» профиль, привыкший лишь воспроизводить устоявшиеся процессы.</p><p>10+ лет опыта в одной и той же роли, минимальное продвижение.</p></div>
+    </div>
+    <p class="fig-cap">Готов к скейлапу: 10 лет опыта, на экспоненциальной траектории. Состоявшийся: 17 лет, на экспоненциальной траектории. Традиционный: 20 лет, на линейной траектории.</p>
+  </div>
+
+  <p>На первый взгляд найм опытных руководителей кажется самым безопасным выбором для компании, которая хочет масштабироваться. Именно этот путь часто рекомендуют венчурные инвесторы. Но опыт не всегда конвертируется в результат — особенно в компании, где проблемы новые, а неопределённость является нормой.</p>
+  <p>В Revolut мы увидели это на собственном опыте: вместо того чтобы ориентироваться на людей с самыми длинными резюме, мы добились успеха с высокопотенциальными людьми — амбициозными, адаптивными, с «сырой» способностью решать проблемы, — которые шли к тому, чтобы стать успешными руководителями, задолго до того, как мы их наняли.</p>
+  <p>Вывод? Оптимизируйте под потенциал, а не под опыт. Ищите людей на восходящей кривой, а не тех, кто уже достиг своего пика.</p>
+
+  <h4>Почему традиционные допущения о найме не работают</h4>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Распространённое допущение</th><th>Почему оно ошибочно</th><th>Как снизить риск</th></tr></thead>
+      <tbody>
+        <tr><td>Младшим сотрудникам не хватает опыта для принятия стратегических решений</td><td>Быстрорастущим компаниям не нужны менеджеры корпоративного типа — им нужны строители, умеющие действовать в условиях неопределённости</td><td>Оцените, как кандидат раскладывает сложные проблемы на составляющие и принимает решения при неполной информации</td></tr>
+        <tr><td>Опытные сотрудники приносят ценные отраслевые знания</td><td>Отраслевые знания полезны, но могут приводить к ригидности мышления; скейлапам нужны люди, которые ставят под сомнение допущения и умеют строить с нуля</td><td>Оцените, как кандидат в прошлом подходил к задаче вне своей области и чему он при этом научился</td></tr>
+        <tr><td>Менее опытные сотрудники не смогут расти вместе с компанией</td><td>Самые рискованные наймы — не самые неопытные, а те, кто рано выходит на плато; у многих из самых успешных сегодняшних лидеров не было опыта на руководящих позициях, когда они начинали</td><td>Смотрите на траекторию: быстрые повышения, кросс-функциональный опыт и успех в конкурентных областях</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Три черты кандидата, готового к скейлапу</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Три обязательные характеристики</p></div>
+    <ol class="steps">
+      <li><div><b>Мышление решателя проблем</b>в быстрорастущем скейлапе проблемы часто новые и требуют нестандартного подхода</div></li>
+      <li><div><b>История достижений</b>быстрые повышения и крупные достижения на работе и за её пределами — сильный предиктор будущего успеха и признак драйва и амбиций</div></li>
+      <li><div><b>Магнит для талантов (для руководителей)</b>сильная способность привлекать, оценивать и развивать A-игроков, обеспечивая культуру высокой результативности по мере роста компании</div></li>
+    </ol>
+  </div>
+  <p>В поисках профилей, готовых к скейлапу, обращайте внимание на:</p>
+  <ul>
+    <li><strong>мышление решателя проблем:</strong> в быстрорастущем скейлапе проблемы часто новые и не имеют очевидных решений; выходцы из крупных организаций нередко с этим не справляются, поскольку бóльшая часть их опыта сводится к воспроизведению или незначительному улучшению существующих процессов;</li>
+    <li><strong>историю достижений:</strong> послужной список быстрых повышений и впечатляющих результатов на работе или в других сферах хорошо предсказывает будущий успех; он свидетельствует о решимости и драйве, которые помогут более младшим специалистам дорасти до своих ролей и внести вклад в долгосрочный успех компании.</li>
+  </ul>
+  <p>При найме на руководящие позиции ищите ещё и:</p>
+  <ul>
+    <li><strong>магнит для талантов:</strong> собрать команду A-игроков и управлять ею — отдельный навык, и он есть не у всех; по мере роста компании решения о найме выйдут за пределы команды основателей, поэтому вам нужны лидеры, способные привлекать лучших и поднимать планку для тех, кто их окружает.</li>
+  </ul>
+  <p>Сам по себе опыт не скажет вам, сможет ли человек преуспеть в среде скейлапа. В следующем разделе вы узнаете больше об интервью, которые помогают выявить эти характеристики.</p>
+</section>
+
+<section class="section" id="s2">
+  <div class="sec-no">02</div>
+  <h2>Три интервью для успеха</h2>
+  <div class="glance">
+    <div class="lbl">Раздел вкратце</div>
+    <ul>
+      <li>Какую бы роль или функцию вы ни нанимали, проводите три интервью с высоким сигналом: оценку решения проблем, бар-рейзер и — для руководителей — оценку управления людьми и найма.</li>
+      <li>Проводите оценку решения проблем на основе реального бизнес-кейса с многослойной проблемой, чтобы проверить мышление от первых принципов и выявить сильных кандидатов.</li>
+      <li>Используйте бар-рейзер, чтобы оценить историю достижений и культурные ценности кандидата, и отбирайте тех, кто поднимет среднюю планку таланта команды.</li>
+      <li>Проверяйте руководителей на способность диагностировать проблемы результативности и стабильно нанимать лучших — с помощью оценки управления людьми и найма.</li>
+    </ul>
+  </div>
+  <p>Найм исключительных талантов в масштабе требует большего, чем просто функциональные проверки: лучшие кандидаты — это не только навыки. Нужна система, которая надёжно выявляет потенциал, амбиции и структурированное мышление.</p>
+  <p>Три интервью ниже созданы именно для этого. Вместе они извлекают тот сигнал, который упускает большинство процессов найма, и должны проводиться (почти) для каждой роли.</p>
+  <p>Каждое интервью предназначено для оценки отдельной черты кандидата:</p>
+  <ul>
+    <li><strong>оценка решения проблем:</strong> способен ли кандидат справиться с самыми сложными задачами и докопаться до сути?</li>
+    <li><strong>бар-рейзер (оценка ценностей и достижений):</strong> находится ли он на восходящей траектории и поднимет ли планку таланта команды?</li>
+    <li><strong>оценка управления людьми и найма (для руководителей):</strong> умеет ли он находить, привлекать и растить следующих лучших сотрудников организации?</li>
+  </ul>
+  <p>Эти интервью дополняют любые проверки профильных навыков (например, технические тесты по программированию для инженеров). Те оценивают функциональные знания, а три интервью ниже гарантируют, что дальше пройдут только люди, способные преуспеть в быстрой, высокорастущей среде.</p>
+
+  <h3>Кто проводит интервью?</h3>
+  <p>На ранних этапах основатель должен оставаться плотно вовлечённым — особенно в интервью бар-рейзер, где оцениваются ценности, амбиции и траектория. Первые сотрудники формируют культуру и задают стандарт. По мере роста компании всё больше интервью можно и нужно делегировать — но только обученным, сертифицированным интервьюерам, которые применяют планку последовательно. Так найм остаётся структурированным и масштабируемым без потери качества.</p>
+
+  <h3>Оценка решения проблем</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Используйте реальный бизнес-кейс для проверки навыков решения проблем</p><span class="dur">45 мин</span></div>
+    <p class="prob"><span class="lbl">Формулировка задачи</span>«Вам поручили починить процесс онбординга клиентов»</p>
+    <div class="compare">
+      <div class="col good"><h5>Сильные кандидаты</h5><ul>
+        <li>раскладывают проблему на компоненты (например, длительность процесса и конверсия)</li>
+        <li>проактивно запрашивают данные, чтобы количественно оценить проблему</li>
+        <li>углубляются на несколько слоёв (например, выходят на качество найма как источник проблемы)</li>
+        <li>учитывают практичность и компромиссы в решениях</li></ul></div>
+      <div class="col avg"><h5>Средние кандидаты</h5><ul>
+        <li>сразу переходят к предложениям, не исследовав проблему</li>
+        <li>фокусируются на поверхностных решениях (например, «добавить больше ресурсов»)</li></ul></div>
+    </div>
+  </div>
+  <p>В растущей компании сталкиваться с проблемами, которые ещё никто не решал, — норма. Поэтому навыки решения проблем критичны почти для всех ролей в скейлапе, даже для тех, что обычно считаются чисто техническими, — от юристов до аналитиков данных.</p>
+  <p>Это интервью с самым высоким сигналом во всём процессе; проведённое правильно, оно отделяет средних кандидатов от самых ярких решателей проблем.</p>
+  <h4>Как проходит интервью</h4>
+  <p>Интервью строится на реальной бизнес-проблеме, которую кандидат должен решить максимально самостоятельно. Проблема должна иметь 2–3 слоя и несколько первопричин. Например: «Конверсия на этапе онбординга упала». Сильный кандидат задаст уточняющие вопросы и выявит разные драйверы: продуктовые проблемы (например, плохой UX), операционные узкие места (например, медленная верификация личности) и пробелы в процессах (например, никто не работает с теми, кто бросил онбординг). Он структурирует проблему, расставит приоритеты среди первопричин и ясно объяснит компромиссы.</p>
+  <p>Сильные кандидаты используют количественные рассуждения, чтобы докопаться до сути, и способны определить самые результативные решения. Средние кандидаты, как правило, остаются на поверхности или перескакивают к решениям, не прояснив цель или логику.</p>
+  <h4>На что обращать внимание</h4>
+  <div class="compare">
+    <div class="col"><h5>Разбор проблемы</h5><ul><li>задаёт критически важные вопросы, чтобы понять контекст</li><li>создаёт структурированный фреймворк</li><li>собирает и использует данные</li><li>раскладывает проблему до простейшей формы</li></ul></div>
+    <div class="col"><h5>Самостоятельность</h5><ul><li>вёл решение с минимальными подсказками или без них</li><li>быстро реагировал на обратную связь</li></ul></div>
+    <div class="col"><h5>Решение</h5><ul><li>показал понимание цели</li><li>предложил реализуемые решения</li><li>учёл последствия решения</li></ul></div>
+  </div>
+  <p class="note"><span class="lbl">Пример</span> Процесс слишком медленный. Сильный кандидат не просто предложит оптимизировать процесс — он копнёт глубже и обнаружит, что первопричина — медленный найм.</p>
+
+  <h3>Бар-рейзер</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Оцените историю достижений и соответствие компании с помощью интервью бар-рейзер</p><span class="dur">60 мин</span></div>
+    <p class="lbl" style="margin-bottom:6px">Примеры вопросов</p>
+    <ul>
+      <li>Каковы были ваши ключевые достижения и провалы на последнем месте работы?</li>
+      <li>Как бы вас оценил ваш предыдущий руководитель?</li>
+      <li>Сталкивались ли вы со сложной ситуацией в команде?</li>
+      <li>Почему вы сделали предыдущий карьерный шаг? Пыталась ли [компания] вас удержать?</li>
+    </ul>
+    <div class="compare">
+      <div class="col good"><h5>Сильные кандидаты — свидетельства в ответах</h5><ul>
+        <li>вели проекты с прямым положительным влиянием на бизнес</li>
+        <li>получали звание лучшего продавца</li>
+        <li>получали повышения одно за другим</li>
+        <li>делились реальными слабостями с примерами того, как над ними работали</li>
+        <li>доводили проекты до конца в сжатые сроки</li>
+        <li>связывали свои действия с измеримыми результатами</li></ul></div>
+      <div class="col avg"><h5>Средние кандидаты</h5><ul>
+        <li>расплывчатые или чрезмерно отрепетированные ответы</li>
+        <li>предыдущая компания не пыталась их удержать</li>
+        <li>отсутствие самоосознанности или амбиций</li></ul></div>
+    </div>
+  </div>
+  <p>Скейлапы живут энергией и решимостью своих команд. Не каждый, кто способен выполнять работу, достоин найма. Это интервью отвечает на более трудный вопрос: поднимет ли этот человек среднюю планку команды?</p>
+  <p>Каждый новый человек в команде должен быть мультипликатором её силы, а не просто ещё одной парой рук. Вам нужны люди на сильной восходящей карьерной траектории, способные создавать и достигать того, чего ещё никто не делал.</p>
+  <h4>Как проходит интервью</h4>
+  <p>Это должен быть глубокий разговор, позволяющий понять карьерную траекторию кандидата, его достижения, слабости и ошибки. Ключ к этому интервью — не довольствоваться поверхностными или заученными ответами, а продвигаться дальше, чтобы оценить реальное влияние и отношение к работе. Ищите честность, высокий темп и ответственность за результат.</p>
+  <p>Это интервью — также возможность оценить культурное соответствие. Ищите конкретные модели поведения и примеры, показывающие, как кандидат действует, — и совпадает ли это с ценностями и способами работы вашей компании.</p>
+  <p class="note"><span class="lbl">Пример</span> Сильный кандидат не скажет просто «я руководил проектом» — он объяснит, как улучшил процесс на 30 %, добился внутренней поддержки и масштабировал решение на другие команды.</p>
+
+  <h3>Оценка управления людьми и найма</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Убедитесь, что руководители способны удерживать высокую планку таланта</p><span class="dur">45 мин</span></div>
+    <p class="prob"><span class="lbl">Формулировка задачи</span>«Вам поручили вывести из кризиса департамент X — как вы будете это решать?»</p>
+    <div class="compare">
+      <div class="col good"><h5>Сильные кандидаты</h5><ul>
+        <li>понимают, что большинство проблем — это проблемы людей, и правильная команда — главный фактор успеха</li>
+        <li>держат высокую планку таланта и быстро реагируют на низкую результативность</li>
+        <li>фокусируются на KPI департамента и разрабатывают план действий по их улучшению</li></ul></div>
+      <div class="col avg"><h5>Средние кандидаты</h5><ul>
+        <li>упускают из виду KPI и результативность команды</li>
+        <li>не способны задать чёткий курс действий или принимать трудные решения</li></ul></div>
+    </div>
+  </div>
+  <p>Привлечь и развить правильную команду — отдельный навык, и он есть не у всех. Это становится всё важнее по мере роста компании, когда решение о том, кого нанять, уже не всегда проходит через команду основателей. Кандидаты, которые будут руководить командой, должны пройти интервью на основе кейса, оценивающее их навыки управления людьми и найма.</p>
+  <p>Это интервью используется для любой роли, где управление людьми и найм — часть работы. Его следует рассматривать как интервью по ключевому навыку, а не как необязательное дополнение, и оценивать так же строго, как любую техническую компетенцию.</p>
+  <h4>Как проходит интервью</h4>
+  <p>Интервью делится на две части разного формата:</p>
+  <ul>
+    <li><strong>Кейс по управлению людьми</strong> — кандидат должен оценить реалистичную проблему в команде и предложить решения.</li>
+    <li><strong>Оценка опыта найма</strong> — глубокий разбор опыта найма, чтобы оценить способность кандидата оценивать и отбирать лучших.</li>
+  </ul>
+  <p class="note"><span class="lbl">Пример</span> Сильный кандидат не скажет просто «я нанял команду» — он объяснит, как выстроил процесс найма, выявлял высокорезультативных сотрудников и обеспечивал их удержание через развитие карьеры.</p>
+</section>
+
+<section class="section" id="s3">
+  <div class="sec-no">03</div>
+  <h2>Фреймворк талантов</h2>
+  <div class="glance">
+    <div class="lbl">Раздел вкратце</div>
+    <ul>
+      <li>Все роли в организации должны быть определены системно; каждая роль — это набор из 3–4 навыков, и она может быть одной и той же для разных команд организации.</li>
+      <li>Определите старших руководителей, которые будут владеть ролями в организации и отвечать за то, как выглядит «хорошо» для роли, и за проектирование процесса интервью.</li>
+      <li>Используйте скоркарды (оценочные карты), описывающие наблюдаемое поведение, чтобы задать уровни владения каждым навыком — это даёт объективный способ оценивать и кандидатов, и действующих сотрудников.</li>
+      <li>Планка таланта определяет минимально требуемые уровни владения каждым навыком для каждого уровня сениорности в данной роли, формируя ожидания от результативности кандидата.</li>
+    </ul>
+  </div>
+  <p>Без чёткого определения того, как на самом деле выглядит «хорошо», даже лучшая структура интервью не гарантирует последовательных решений. Здесь и нужен фреймворк талантов.</p>
+  <p>Он выравнивает всех — рекрутеров, нанимающих менеджеров и интервьюеров — относительно навыков, поведения и ожиданий, необходимых для успеха на каждом уровне. Он обеспечивает единообразное применение планки найма во всех командах и становится фундаментом для оценки результативности и повышений после выхода человека на работу — подробнее об этом в <a href="https://quantumlightcapital.com/playbooks/performance-management">плейбуке о результативности</a>.</p>
+
+  <h3>Как построить фреймворк талантов</h3>
+  <p>По сути, создание фреймворка талантов состоит из трёх шагов:</p>
+  <ol class="steps">
+    <li><div><b>Стандартизируйте роли</b>добивайтесь оценки похожих ролей по единому набору навыков. Например, вы должны ожидать одинакового качества инженеров во всех командах, независимо от того, кому они подчиняются.</div></li>
+    <li><div><b>Определите навыки через скоркарды</b>создайте скоркарды с «идеальным поведением», которое вы должны видеть у кандидатов по каждому навыку в вашей организации. Менеджеры не смогут отклоняться от скоркардов при найме.</div></li>
+    <li><div><b>Задайте чёткую планку таланта</b>определите, каким уровнем навыка должна владеть каждая роль в вашей организации. Например, вы не будете искать одинаковых признаков умения решать проблемы у младшего аналитика данных и у вашего будущего CFO.</div></li>
+  </ol>
+
+  <h3>Определение ролей</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Роли определяются как набор навыков и универсальны для всех команд</p></div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Команда продаж</th><th>Финансовая команда</th><th>Продуктовая команда</th></tr></thead>
+        <tbody>
+          <tr><td>Роль 1</td><td>Роль 1</td><td>Роль 1</td></tr>
+          <tr><td>Роль 2</td><td>Роль 2</td><td>Роль 2</td></tr>
+          <tr><td><strong>Аналитик данных</strong></td><td><strong>Аналитик данных</strong></td><td><strong>Аналитик данных</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="fig-cap">Владелец роли → <strong>Аналитик данных</strong> → Навыки: Python · Визуализация данных · Решение проблем. Одна и та же роль с одним и тем же набором навыков встречается в каждой из команд.</p>
+  </div>
+  <p>Роль определяется как набор из 3–4 навыков, исходя из того, что требуется для работы, и универсальна для всех, кто использует те же навыки в компании, — независимо от департамента, продукта или команды.</p>
+  <p>Для каждой роли определите владельца роли. Это старшие руководители вашей организации, которые могут определить, как выглядит «хорошо», и отвечают за проектирование процессов интервью, включая задаваемые вопросы. Например, руководитель продаж может быть функциональным лидером для продавцов, а CTO — для инженеров.</p>
+
+  <h4>Используйте скоркарды для стандартизации оценки навыков</h4>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Скоркард навыка</p></div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Уровень владения</th><th>Требование (наблюдаемое поведение)</th><th class="c">Отметка</th></tr></thead>
+        <tbody>
+          <tr><td>Неудовлетворительно</td><td>XXX<br>XXX</td><td class="c">Да<br>Да</td></tr>
+          <tr><td>Базовый</td><td>XXX<br>XXX</td><td class="c">Да<br>Да</td></tr>
+          <tr><td>Средний</td><td>XXX<br>XXX</td><td class="c">Да<br>Да</td></tr>
+          <tr><td>Продвинутый</td><td>XXX<br>XXX</td><td class="c">Да<br>Нет</td></tr>
+          <tr><td>Исключительный</td><td>XXX<br>XXX</td><td class="c">Нет<br>Нет</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul>
+      <li><strong>Единая шкала</strong> — одни и те же пять уровней оценивают каждый навык в компании.</li>
+      <li><strong>Каждое требование отмечается «Да/Нет»</strong> по наблюдаемому поведению.</li>
+    </ul>
+  </div>
+  <p>Последовательность — ключевая характеристика фреймворка талантов. Без неё менеджеры могут применять разные стандарты, ставя под угрозу качество талантов вашей организации.</p>
+  <p>Скоркарды переводят навыки в конкретные утверждения «верно/неверно» о наблюдаемом поведении. Они используются во время интервью, чтобы направлять оценку, и после найма — для поддержки оценки результативности и повышений.</p>
+  <p>Строя скоркарды, держите в уме две вещи:</p>
+  <ul>
+    <li><strong>Единая шкала оценки</strong> — для всех скоркардов используется одна и та же 5-уровневая шкала: Неудовлетворительно, Базовый, Средний, Продвинутый, Исключительный. «Неудовлетворительно» — это поведение-«красный флаг», которого не должен демонстрировать никто. «Исключительный» — уровень, которого достигают только самые лучшие в своей области.</li>
+    <li><strong>Наблюдаемое поведение</strong> — подумайте о поведении, которое вы хотели бы видеть у своих сотрудников, и постройте скоркард вокруг него. Такой подход снижает предвзятость менеджеров, давая им точные модели поведения для отслеживания на интервью и в оценке результативности, а сотрудникам — ясные ориентиры, к которым нужно стремиться.</li>
+  </ul>
+
+  <h3>Планка таланта</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Планка таланта задаёт ожидания от результативности для каждой роли и уровня сениорности</p><span class="dur">Аналитик данных</span></div>
+    <p class="fig-cap" style="margin-top:0">В оригинале здесь интерактивная диаграмма: для роли «Аналитик данных» по навыкам Python, Визуализация данных и Решение проблем на шкале от «Неудовлетворительно» до «Исключительный» прослеживается минимальный уровень для каждого грейда — Junior, Mid, Senior и Lead. Пример с конкретными значениями приведён ниже для роли дата-сайентиста.</p>
+  </div>
+  <p>Скоркарды дают полезные ориентиры, чтобы понять, владеет ли сотрудник или кандидат конкретным навыком. Но как понять, что «достаточно хорошо»?</p>
+  <p>Здесь вступает в игру планка таланта. Она определяет минимально требуемый уровень владения для данного навыка и уровня сениорности. Это структурированный ориентир, который выравнивает ожидания от разных ролей в компании и устанавливает чёткий эталон, по которому можно оценивать кандидатов.</p>
+  <p>От всех сотрудников ожидается, что они практикуют навыки своей роли на уровне, заданном планкой таланта для их сениорности; на интервью нужно убедиться, что и кандидаты соответствуют планке.</p>
+
+  <h4>Пример — дата-сайентист</h4>
+  <p><strong>Описание роли:</strong> применяет методологию, статистический вывод и офлайн-модели машинного обучения для принятия бизнес-решений.</p>
+  <p class="lbl">Планка таланта</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Навыки</th><th>Junior</th><th>Mid</th><th>Senior</th><th>Lead</th></tr></thead>
+      <tbody>
+        <tr><td>Машинное обучение</td><td><span class="lv">Базовый</span></td><td><span class="lv">Средний</span></td><td><span class="lv">Продвинутый</span></td><td><span class="lv">Исключительный</span></td></tr>
+        <tr><td>Программирование на Python</td><td><span class="lv">Базовый</span></td><td><span class="lv">Средний</span></td><td><span class="lv">Средний</span></td><td><span class="lv">Продвинутый</span></td></tr>
+        <tr><td>Анализ данных</td><td><span class="lv">Базовый</span></td><td><span class="lv">Средний</span></td><td><span class="lv">Продвинутый</span></td><td><span class="lv">Продвинутый</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="lbl">Скоркард навыка «Анализ данных»</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Уровень владения</th><th>Чек-лист</th></tr></thead>
+      <tbody>
+        <tr><td>Неудовлетворительно</td><td><ul>
+          <li>Теряется в наборах данных. С трудом находит простые тренды или инсайты.</li>
+          <li>Выбирает визуализации, не подходящие для представления данных. Не даёт ясной общей картины или даже скрывает характеристики данных из-за неудачного выбора измерений.</li></ul></td></tr>
+        <tr><td>Базовый</td><td><ul>
+          <li>Понимает большие наборы данных и находит в них инсайты.</li>
+          <li>Понимает бизнес-цели и может подобрать правильные метрики для измерения.</li>
+          <li>Уместно использует описательную статистику (например, сумму, среднее, медиану, скользящие расчёты).</li>
+          <li>Строит простые, ясные визуализации, фокусируясь на важной информации.</li></ul></td></tr>
+        <tr><td>Средний</td><td><ul>
+          <li>Даёт простые бизнес-рекомендации на основе своего анализа, с подтверждёнными примерами.</li>
+          <li>Исходя из бизнес-целей, самостоятельно ведёт анализ. Например, создаёт полноценные дашборды, ориентированные на бизнес-цель, без того, чтобы стейкхолдеры задавали список требуемых расчётов.</li>
+          <li>Структурирует и представляет сложную информацию максимально эффективно.</li></ul></td></tr>
+        <tr><td>Продвинутый</td><td><ul>
+          <li>Даёт рекомендации для важных бизнес-решений и процессов, с подтверждёнными примерами.</li>
+          <li>Рассматривает данные под разными углами, обеспечивая выявление и представление всей релевантной информации.</li>
+          <li>Мыслит о своём анализе в контексте общей картины, умеет связывать разные области. Например: вклад конкретных продуктов или процессов в цели компании, связанные риски, взаимозависимости.</li></ul></td></tr>
+        <tr><td>Исключительный</td><td><ul>
+          <li>Даёт заслуживающие доверия бизнес-рекомендации для важнейших решений компании, с подтверждёнными примерами. Авторитетно знает, какие метрики дают правильные инсайты.</li></ul></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="section" id="s4">
+  <div class="sec-no">04</div>
+  <h2>Стандартизированный процесс найма</h2>
+  <div class="glance">
+    <div class="lbl">Раздел вкратце</div>
+    <ul>
+      <li>Структурированный процесс найма делает вашу планку таланта воспроизводимой и масштабируемой.</li>
+      <li>Начинайте с чёткого документа процесса найма и не запускайте сорсинг, пока он не готов.</li>
+      <li>Быстро калибруйтесь с помощью сорсинг-спринта, который выравнивает понимание качества прежде объёма, и продолжайте проактивно искать кандидатов.</li>
+      <li>Отбирайте кандидатов с помощью балльных фильтров и звонков, сфокусированных на соответствии роли и карьерной траектории.</li>
+      <li>Проводите интервью по скоркардам и назначайте только обученных, сертифицированных интервьюеров.</li>
+      <li>Вовлекайте кандидатов на протяжении всего процесса персонализированной коммуникацией, чтобы выстраивать доверие и поддерживать темп.</li>
+      <li>Делайте офферы, опираясь на мотивацию кандидата, а не только на компенсацию.</li>
+      <li>Подтверждайте решение структурированной проверкой рекомендаций, которая выявляет риски и подтверждает сильные стороны.</li>
+      <li>Завершайте процесс найма испытательным сроком с чёткими целями и структурированными контрольными точками, чтобы убедиться, что новый сотрудник соответствует планке таланта.</li>
+      <li>Контролируйте процесс, отслеживая конверсию воронки, отказы от офферов и ранние увольнения, — замечайте сбои до того, как они станут закономерностью.</li>
+    </ul>
+  </div>
+
+  <h3>Стандартизация каждого шага найма</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Процесс найма от начала до конца</p><span class="dur">владелец шага</span></div>
+    <ol class="steps">
+      <li><div><b>Разработка документа процесса найма</b>Что вы ищете, как это оценивать и кто участвует — в едином документе-«источнике истины».<span class="own">Владелец роли</span></div></li>
+      <li><div><b>Сорсинг</b>Наполняйте верх воронки и быстро калибруйтесь с помощью проактивного сорсинга.<span class="own">Сорсер</span></div></li>
+      <li><div><b>Скрининг</b>Используйте балльные фильтры и структурированные звонки, чтобы оценить опыт, мотивацию и красные флаги.<span class="own">Рекрутер</span></div></li>
+      <li><div><b>Интервью</b>3–4 интервью по стандартизированным плейбукам и скоркардам, проводимые сертифицированными интервьюерами.<span class="own">Рекрутер · Интервьюер</span></div></li>
+      <li><div><b>Продажа роли и закрытие</b>Закрывайте кандидатов, понимая их мотивацию и проактивно устраняя потенциальные блокеры.<span class="own">Рекрутер</span></div></li>
+      <li><div><b>Проверка рекомендаций</b>Подтвердите сильные стороны и соберите обратную связь, чтобы до финализации найма не осталось слепых зон.<span class="own">Рекрутер · Интервьюер</span></div></li>
+      <li><div><b>Испытательный срок</b>Подтвердите найм, оценивая результативность в роли по структурированным целям и контрольным точкам.<span class="own">Рекрутер · Владелец роли</span></div></li>
+    </ol>
+  </div>
+  <p>Одно дело — знать, как выглядит отличный талант. Другое — стабильно находить, оценивать и закрывать таких людей в разных командах, часовых поясах и с разными нанимающими менеджерами. Здесь и нужен процесс.</p>
+  <p>Стандартизация процесса рекрутинга делает найм на новые роли бесшовным. Она позволяет принимать быстрые и уверенные решения и делает качество воспроизводимым — особенно когда по мере масштабирования компании число открытых позиций растёт. Какой бы ни была роль, процесс найма должен проходить одни и те же ключевые шаги с чёткими владельцами, чтобы обеспечить последовательность и удерживать высокую планку таланта.</p>
+
+  <h3>1. Начните с документа процесса найма</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Документ процесса найма — единый источник истины для рекрутеров и нанимающих менеджеров</p></div>
+    <div class="compare">
+      <div class="col"><h5>Описание роли и ключевые результаты</h5><ul><li>Обязательные требования</li><li>Желательные требования</li><li>Красные флаги</li></ul></div>
+      <div class="col"><h5>Архетипичные профили из LinkedIn, соответствующие требованиям к резюме</h5><ul><li>Отрасли</li><li>Компании</li></ul></div>
+      <div class="col"><h5>Список и последовательность интервью</h5><ul><li>Плейбуки интервью</li><li>Скоркарды интервью</li><li>Список интервьюеров</li></ul></div>
+    </div>
+  </div>
+  <p>До начала сорсинга, до назначения любых интервью каждая роль должна начинаться с общего письменного плана — документа процесса найма. Это шаблонный документ, который определяет процесс от сорсинга до скрининга и далее до интервью и служит главным источником истины для рекрутеров.</p>
+  <p>За создание и поддержание документа процесса найма отвечает владелец роли при поддержке рекрутера, который следит, чтобы документ был полным и разослан до начала сорсинга.</p>
+  <h4>Документ процесса найма в деталях</h4>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Раздел</th><th>Что в него входит</th></tr></thead>
+      <tbody>
+        <tr><th colspan="2" style="text-transform:none;font-size:14px;letter-spacing:0">Роль и требования</th></tr>
+        <tr><td>О роли</td><td>Общая информация о роли, включая её назначение и сведения о владельце роли</td></tr>
+        <tr><td>Ключевые результаты</td><td>Ключевые результаты — в идеале однозначно измеримые, — которых должен достичь человек в этой роли</td></tr>
+        <tr><td>Требования к резюме</td><td>Требования к опыту работы или образованию, которые можно вывести из резюме или профиля LinkedIn. Их назначение — дать рекрутерам параметры для скрининга кандидатов. Они делятся на:<ul><li>обязательные (must-have)</li><li>желательные (nice-to-have)</li><li>красные флаги</li></ul></td></tr>
+        <tr><td>Примеры профилей</td><td>2–3 архетипичных «примерных» профиля из LinkedIn, соответствующих требованиям к резюме</td></tr>
+        <tr><td>Релевантные компании и секторы</td><td>Список лучших компаний и секторов, откуда стоит искать кандидатов</td></tr>
+        <tr><td>Описание вакансии</td><td>Описание вакансии, которое можно использовать как текст для публикации роли на джоб-бордах и которое помогает рекрутерам отвечать на вопросы о роли. Рекомендуемые разделы:<ul><li>О команде</li><li>О роли (миссия роли)</li><li>Чем вы будете заниматься (ключевые результаты и обязанности)</li><li>Кого мы ищем (требования к резюме)</li><li>Преимущества (компании и роли)</li></ul></td></tr>
+        <tr><th colspan="2" style="text-transform:none;font-size:14px;letter-spacing:0">Процесс найма</th></tr>
+        <tr><td>Список обязательных шагов процесса найма</td><td>Шаги процесса интервью со ссылками на плейбуки, скоркарды и список допущенных интервьюеров, чтобы документ стал для рекрутеров «единым окном». Типичный пример:<ul><li>Скрининг резюме</li><li>Скрининг-звонок</li><li>Оценка функциональных навыков</li><li>Бар-рейзер</li></ul></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>2. Построение воронки через сорсинг</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Чтобы создать надёжный рекрутинговый пайплайн, сосредоточьтесь на трёх вещах</p></div>
+    <div class="compare">
+      <div class="col"><h5>Сорсинг-спринт</h5><p style="margin:0;font-size:15px">Спринт для калибровки требований и проверки подхода вместе с нанимающим менеджером</p></div>
+      <div class="col"><h5>Оптимизированный аутрич</h5><p style="margin:0;font-size:15px">Структурированный подход к контакту с кандидатами, максимизирующий долю ответов</p></div>
+      <div class="col"><h5>Инструменты рекрутера</h5><p style="margin:0;font-size:15px">Эффективное использование шаблонов и инструментов, таких как LinkedIn Recruiter</p></div>
+    </div>
+  </div>
+  <p>Сорсинг — часть воронки найма с наибольшим рычагом; он задаёт тон качеству. Слабый сорсинг вынуждает команду проводить избыточные интервью с посредственными кандидатами и тратить время на повторное закрытие позиций. В масштабе именно он отделяет быстрые компании, поднимающие планку, от тех, кто опускает её, лишь бы закрыть роли.</p>
+  <p>Мы считаем, что способность находить сильные профили и создавать надёжный рекрутинговый пайплайн держится на трёх вещах:</p>
+  <ul>
+    <li><strong>Начните с сорсинг-спринта</strong> — прежде чем запускать полноценный аутрич, проведите недельный сорсинг-спринт, чтобы откалибровать требования и проверить гипотезы вместе с нанимающим менеджером. Он включает:
+      <ul><li>10–15 (реальных) профилей по 2–3 архетипам кандидатов;</li><li>живой разбор с нанимающим менеджером, чтобы договориться, где ваши фильтры слишком узкие или слишком широкие, и внести корректировки в критерии по резюме или в целевые компании.</li></ul></li>
+    <li><strong>Оптимизируйте способ контакта с кандидатами</strong> — структурированный подход к контакту помогает максимизировать долю ответов и экономит время; он должен включать:
+      <ul><li>шаблоны аутрича с заранее определёнными полями для персонализации и A/B-тестированными версиями, чтобы найти самое рабочее сообщение;</li><li>график из трёх касаний для фоллоу-апа, чтобы никто не терялся, когда число профилей растёт.</li></ul></li>
+    <li><strong>Используйте правильные инструменты, усиливающие рекрутеров</strong> — LinkedIn Recruiter является ключевым инструментом для контакта с кандидатами.</li>
+  </ul>
+  <div class="note">
+    <div class="lbl">Об удалённых регионах с высокой плотностью талантов</div>
+    <p>Один из самых эффективных способов повысить эффективность сорсинга — выйти за пределы традиционных рынков. Доступ к удалённым регионам с высокой плотностью талантов открывает исключительных кандидатов, которых часто упускают из виду на перенасыщенных локальных рынках.</p>
+    <p>Такой подход повышает вероятность найти людей, соответствующих вашей планке (или превосходящих её), особенно в конкурентных функциях — инженерии, данных и операциях.</p>
+    <p>С чего начать:</p>
+    <ul>
+      <li>Определите целевые регионы с высокой плотностью талантов по функциям (например, Восточная Европа для инженерии)</li>
+      <li>Проведите сорсинг-спринты в новых регионах, чтобы проверить качество кандидатов и рано скорректировать фильтры</li>
+    </ul>
+    <p>Эта стратегия помогла таким компаниям, как Revolut, масштабировать сильнейшие инженерные команды по всему миру — и за малую долю стоимости найма в Лондоне или Сан-Франциско.</p>
+    <p style="margin:0">Речь не о снижении планки. Речь о расширении воронки и поиске отличных людей там, где другие не ищут.</p>
+  </div>
+
+  <h3>3. Скрининг правильных талантов</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Используйте 30-минутный скрининг-звонок с рекрутером, чтобы отфильтровать кандидатов</p><span class="dur">30 мин</span></div>
+    <ol class="steps">
+      <li><div><b>Знакомство и контекст</b>Представьте компанию, дайте обзор роли, основных требований и целей.</div></li>
+      <li><div><b>Оценка кандидата</b>Используйте скоркард для первичной оценки опыта кандидата и обсудите практические вопросы (доступность, локация, компенсация).
+        <p class="lbl" style="margin:14px 0 6px">Пример скоркарда для Product Owner</p>
+        <div class="scroll" style="margin-top:0">
+          <table>
+            <thead><tr><th>Критерий</th><th>Что показал кандидат</th><th>Баллы</th></tr></thead>
+            <tbody>
+              <tr><td>Работал ли кандидат над проектированием бэкенд-архитектуры?</td><td>Да<br>Нет</td><td><span class="pt">1 балл</span><br><span class="pt">0 баллов</span></td></tr>
+              <tr><td>Коммуникативные навыки</td><td>Разбивает большую проблему на малые части<br>Количественно описывает достижения<br>Продемонстрировал внимание к KPI<br>Ничего из перечисленного</td><td><span class="pt">1 балл</span><br><span class="pt">1 балл</span><br><span class="pt">1 балл</span><br><span class="pt">0 баллов</span></td></tr>
+              <tr><td>Архетип PO</td><td>STEM-образование<br>Опыт основателя/сооснователя<br>Бывший инженер-программист<br>Ничего из перечисленного</td><td><span class="pt">1 балл</span><br><span class="pt">1 балл</span><br><span class="pt">1 балл</span><br><span class="pt">0 баллов</span></td></tr>
+              <tr><td>Красные флаги</td><td>Жалуется на текущую роль<br>Больше интересуется компенсацией<br>Несовпадение ожиданий по сениорности<br>Не смог количественно описать достижения</td><td><span class="pt neg">−1 балл</span><br><span class="pt neg">−1 балл</span><br><span class="pt neg">−1 балл</span><br><span class="pt neg">−1 балл</span></td></tr>
+              <tr><td><strong>Проходной балл</strong></td><td></td><td><span class="pt"><strong>4 балла</strong></span></td></tr>
+            </tbody>
+          </table>
+        </div></div></li>
+      <li><div><b>Завершение и следующие шаги</b>Ответьте на вопросы кандидата и чётко обозначьте следующие шаги; если хотите продолжить — опишите процесс, иначе прозрачно объясните, почему роль не подходит.</div></li>
+    </ol>
+  </div>
+  <p>Скрининг-звонок — ваша первая реальная возможность оценить, вероятен ли успех кандидата в роли, а не только его интерес. Рекрутер должен оценить, соответствует ли опыт кандидата вашему скоркарду найма и совпадает ли его карьерная траектория с вашими ожиданиями. «Может быть» на этапе скрининга — это обычно «нет». Лучше отсеять и сохранить качество интервью, чем надеяться, что позже что-то «щёлкнет».</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Область</th><th>Что вы проверяете</th></tr></thead>
+      <tbody>
+        <tr><td>Соответствие роли</td><td>Соответствует ли опыт кандидата требованиям скоркарда? Сталкивался ли он с похожими задачами или сложностью?</td></tr>
+        <tr><td>Траектория</td><td>Есть ли признаки восходящего движения, расширения зоны ответственности или адаптивности? Растёт ли он достаточно быстро для вашей среды?</td></tr>
+        <tr><td>Мотивация</td><td>Он бежит к этой роли или просто от прошлой? Что его вдохновляет именно в этой возможности?</td></tr>
+        <tr><td>Красные флаги</td><td>Расплывчатые ответы, перекладывание вины, низкое любопытство, низкая ответственность за результат или явное несовпадение ценностей</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>4. Стандартизация интервью</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Плейбук интервью</p></div>
+    <p style="max-width:none">Проверяемые навыки: <span class="lv">Знание статистики</span> <span class="lv">Опыт с ML-моделями</span> <span class="lv">Владение программированием</span> → <strong>Скоркарды интервью</strong> · <strong>Библиотека кейсов</strong></p>
+    <p class="lbl" style="margin-bottom:6px">Скоркард интервью — «Знание статистики»</p>
+    <p style="font-size:15px">Вопросы: задача на оценку максимального правдоподобия (MLE); настроить и решить A/B-тест.</p>
+    <div class="scroll" style="margin-bottom:0">
+      <table>
+        <thead><tr><th>Наблюдаемое поведение</th><th class="c">Ответ</th><th>Соответствует планке для</th></tr></thead>
+        <tbody>
+          <tr><td>Решил задачу с некоторой помощью</td><td class="c">Да</td><td>Junior</td></tr>
+          <tr><td>Решил задачу и может её обсудить</td><td class="c">Да</td><td rowspan="2">Mid</td></tr>
+          <tr><td>Может объяснить, как работают A/B-тесты</td><td class="c">Да</td></tr>
+          <tr><td>Решил задачу быстро и может обсудить нюансы</td><td class="c">Нет</td><td rowspan="2">Senior</td></tr>
+          <tr><td>Может подробно говорить об A/B-тестировании</td><td class="c">Нет</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p>На раннем этапе основатели проводят интервью со всеми кандидатами, чтобы планка таланта оставалась стабильно высокой. По мере роста компании основателям приходится полагаться в найме на менеджеров. Здесь возникает проблема несовпадения стимулов: у менеджеров есть KPI (например, запустить продукт), поэтому им выгодно быстро нанять средних людей, чтобы сделать работу, а не держать высокую планку.</p>
+  <p>Разработка и внедрение стандартного формата интервью на раннем этапе поможет справиться с этой проблемой и обеспечить единообразие новых наймов. Для этого по каждому типу интервью разработайте:</p>
+  <ul>
+    <li><strong>плейбук интервью</strong> — пошаговое руководство, которое направляет интервьюеров в том, как оценивать кандидатов, и обеспечивает единообразие интервью;</li>
+    <li><strong>скоркард интервью</strong> — определяет требования как набор утверждений «верно/неверно» о наблюдаемом поведении, чтобы убрать субъективность из оценки кандидата, и согласуется со скоркардом того навыка, который проверяется на интервью; проверяемые навыки должны один к одному соответствовать навыкам, определённым в вашем фреймворке талантов.</li>
+  </ul>
+  <h4>Программа сертификации интервьюеров</h4>
+  <p>Интервьюеры — хранители вашей планки таланта. Чтобы защитить качество и последовательность, никто не должен проводить интервью без сертификации. Как минимум это означает:</p>
+  <ul>
+    <li><strong>Отбор квалифицированных интервьюеров:</strong> оценивать кандидатов должны только высокорезультативные сотрудники — задайте чёткие минимальные требования (например, высшая оценка результативности по определённому навыку; интервью только на роли равной или более низкой сениорности)</li>
+    <li><strong>Структурированное обучение:</strong> функциональные лидеры должны разработать обучение интервьюеров по конкретным навыкам</li>
+    <li><strong>Обязательное наблюдение (shadowing):</strong> кандидаты в интервьюеры должны понаблюдать за 2–3 интервью опытных интервьюеров, а затем обсудить обратную связь на дебрифах</li>
+    <li><strong>Оценка через обратное наблюдение (reverse shadow):</strong> перед сертификацией кандидаты в интервьюеры проводят пробные интервью и получают обратную связь от опытных интервьюеров</li>
+  </ul>
+  <p>Отслеживайте, кто сертифицирован по каждому типу интервью, и ведите отдельные реестры для функциональных и универсальных интервью (например, бар-рейзер, решение проблем). Если доля прошедших у интервьюера стабильно превышает 60 %, переоцените его: либо он неверно применяет планку, либо само интервью нужно пересмотреть.</p>
+  <p>По мере роста числа интервью можно ввести оценку качества интервьюера (Interviewer Quality Score, IQC). Эта метрика измеряет среднее отклонение результатов интервью от первой оценки результативности тех новых сотрудников, которых оценивал интервьюер. По IQC интервьюеров можно ранжировать, а саму оценку использовать, чтобы решить, стоит ли привлекать их как тренеров для новых интервьюеров или им нужно заново пройти обучение и сертификацию.</p>
+
+  <h3>5. Вовлечение кандидатов</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Поддерживайте вовлечённость кандидатов на протяжении всего процесса рекрутинга</p></div>
+    <div class="compare">
+      <div class="col"><h5>Питч-звонок</h5><p style="margin:0 0 6px;font-size:15px"><strong>Когда:</strong> после скрининга резюме</p><p style="margin:0;font-size:15px"><strong>Цель:</strong> понять мотивацию кандидата и подчеркнуть ценностное предложение компании и роли</p></div>
+      <div class="col"><h5>Звонок перед закрытием (пре-клоузинг)</h5><p style="margin:0 0 6px;font-size:15px"><strong>Когда:</strong> после успешных первых интервью</p><p style="margin:0;font-size:15px"><strong>Цель:</strong> снять возражения и начать формировать энтузиазм, чтобы облегчить закрытие в случае успешного прохождения процесса</p></div>
+    </div>
+  </div>
+  <p>Слишком многие процессы найма рассматривают закрытие как финальный шаг. В реальности закрытие начинается с первого сообщения и продолжается при каждом взаимодействии. На конкурентных рынках у сильных кандидатов есть варианты. Офферы — это не только компенсация, но и доверие, ясность и убеждённость. Этот шаг о том, чтобы осознанно вовлекать кандидатов на протяжении всего процесса и, когда придёт время, провести закрытие с максимальным эффектом.</p>
+  <p>Чтобы минимизировать число кандидатов, отпадающих по ходу процесса, рекрутеры должны выстроить бесшовную коммуникацию с кандидатом, понять его мотивацию помимо компенсации и подготовиться к закрытию в случае успеха. Мы рекомендуем две ключевые точки контакта в ходе процесса:</p>
+  <ul>
+    <li><strong>Питч-звонок</strong> — понимание опыта и мотивации кандидата является ключом к тому, чтобы эффективно «продать» ему роль</li>
+    <li><strong>Звонок перед закрытием</strong> — снимите возражения до того, как они возникнут, и начните формировать у кандидата энтузиазм</li>
+  </ul>
+  <p>К моменту, когда вы делаете оффер, он должен ощущаться естественным и воодушевляющим завершением, а не сюрпризом. Кандидат уже должен знать, что вы его хотите, глубоко понимать роль и чувствовать, что это его следующая глава.</p>
+  <h4>Работа с типичными возражениями</h4>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Возражение</th><th>Как отвечать</th></tr></thead>
+      <tbody>
+        <tr><td>«Я не уверен насчёт компенсации»</td><td>Опирайтесь на совокупную компенсацию и долгосрочный апсайд; ясно объясните, как работает доля в компании (equity)</td></tr>
+        <tr><td>«У меня есть другие офферы»</td><td>Опирайтесь на мотивацию: почему эта роль подходит лучше? Почему эта команда, этот момент, эта траектория?</td></tr>
+        <tr><td>«Я не уверен насчёт культурного соответствия»</td><td>Направьте кандидата к рекомендателям: бывшим сотрудникам, будущим коллегам и даже прошлым кандидатам, которые не присоединились</td></tr>
+        <tr><td>«Мне нужно больше времени»</td><td>Признайте это, но держите твёрдый, хоть и разумный, срок, чтобы сохранить темп</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>6. Проверка рекомендаций как финальный предохранитель</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Используйте проверку рекомендаций, чтобы верифицировать информацию и собрать обратную связь</p></div>
+    <ol class="steps">
+      <li><div><b>Запросите рекомендателей</b>Рекрутер отправляет оффер, обусловленный рекомендациями, и запрашивает контактные данные.</div></li>
+      <li><div><b>Выберите, с кем связаться</b>Отдавайте приоритет рекомендателям с самым недавним и самым длительным опытом работы с кандидатом.</div></li>
+      <li><div><b>Назначьте звонки</b>Рекрутер связывается с рекомендателями, чтобы договориться о звонках.</div></li>
+      <li><div><b>Соберите обратную связь</b>Сертифицированный интервьюер, проводивший интервью, звонит рекомендателям и проходит по стандартному скоркарду для оценки кандидата.</div></li>
+      <li><div><b>Действуйте по результату</b>Оффер остаётся в силе, если результат проверки рекомендаций удовлетворителен.</div></li>
+    </ol>
+  </div>
+  <p>К моменту, когда вы готовы сделать оффер, вы потратили часы на интервью с кандидатом. Вы видели, как он проявляет себя в структурированных интервью, слышали его историю на скрининг-звонке и загорелись тем, что он может принести команде. Но чего вы не видели — так это того, каков он изо дня в день: под давлением, в плохие дни, когда он не согласен или когда никто не смотрит.</p>
+  <p>Проверка рекомендаций — это не только верификация предоставленной кандидатом информации, но и полезный инструмент сбора 360-градусной обратной связи от его бывших коллег. Это критически важный шаг процесса рекрутинга, и нередко он приводит к отзыву оффера.</p>
+  <p>Проверку рекомендаций должен проводить тот же интервьюер, который проводил бар-рейзер. Это обеспечивает преемственность, позволяет напрямую сравнить услышанное с собственной историей кандидата и даёт более острое суждение о любых несоответствиях.</p>
+  <h4>Примеры вопросов для звонка рекомендателю</h4>
+  <p>Чтобы получить качественный сигнал, звонки рекомендателям должны следовать структурированному набору вопросов, зеркалящих темы бар-рейзера:</p>
+  <ul>
+    <li>Как бы вы оценили результативность кандидата (от 0 до 10) и почему?</li>
+    <li>Каким было его крупнейшее достижение в этой роли?</li>
+    <li>Каковы были его основные зоны развития? Как он реагировал на обратную связь?</li>
+    <li>Наняли бы вы его снова? Почему да или почему нет?</li>
+  </ul>
+  <p>По каждому вопросу копайте на 2–3 слоя глубже. Не довольствуйтесь общей похвалой — просите конкретные примеры, трудности, с которыми человек сталкивался, и то, как он с ними справлялся.</p>
+
+  <h3>7. Испытательный срок — последний шаг найма</h3>
+  <p>Процесс найма не заканчивается принятием оффера — он заканчивается после испытательного срока.</p>
+  <p>Испытательный срок — период, когда вы подтверждаете, что человек способен работать на ожидаемом уровне в среде вашей компании. Это ваш последний шаг к выявлению A-игроков и возможность быстро действовать, если обнаружится несоответствие.</p>
+  <p>Структурированный испытательный срок должен включать:</p>
+  <ul>
+    <li><strong>Постановку целей:</strong> чёткие, измеримые цели, установленные в течение 2 недель после выхода</li>
+    <li><strong>Контрольные ревью:</strong> промежуточное и финальное ревью, чтобы оценить результативность относительно целей и дать возможность скорректировать курс</li>
+    <li><strong>Решение комитета:</strong> финальное решение принимает назначенный комитет на основе результативности и рекомендации нанимающего менеджера</li>
+  </ul>
+
+  <h3>Мониторинг процесса</h3>
+  <p class="fig-title" style="margin-bottom:4px">Отслеживайте 3 KPI, чтобы процесс рекрутинга оставался на верном пути</p>
+  <div class="kpis">
+    <div class="kpi"><div class="lbl k">Объём</div><div class="v">% выполнения квот</div><div class="d">→ гарантирует, что потребности в персонале закрыты</div></div>
+    <div class="kpi"><div class="lbl k">Качество</div><div class="v">% новых сотрудников, уволенных или ушедших в первые 6 месяцев</div><div class="d">→ оценивает эффективность процесса</div></div>
+    <div class="kpi"><div class="lbl k">Отказы от офферов</div><div class="v">% отклонённых офферов</div><div class="d">→ предупреждает о потенциальных проблемах в процессе</div></div>
+  </div>
+  <p>Спроектировать отличный процесс найма — только половина дела. Настоящая задача — убедиться, что ему следуют и что он продолжает давать результаты, которые вам важны: скорость, качество и последовательность.</p>
+  <p>По мере роста объёмов найма даже небольшие сбои (например, пропущенная обратная связь, расплывчатые скоркарды, дрейф качества сорсинга) быстро накапливаются. Чтобы этого не допустить, систему нужно мониторить так же, как любую критически важную бизнес-функцию.</p>
+  <p>Для этого непрерывно отслеживайте три ключевых KPI на уровне компании:</p>
+  <ul>
+    <li><strong>Объём:</strong> % выполнения квот — гарантирует, что команда закрывает потребности в персонале, и показывает, когда нужны дополнительные рекрутеры</li>
+    <li><strong>Качество:</strong> % новых сотрудников, уволенных или ушедших в первые 6 месяцев — показывает, тех ли людей вы нанимаете</li>
+    <li><strong>Отказы от офферов:</strong> % отклонённых офферов — указывает на потенциальные проблемы в процессе: опыт кандидата, конкурентоспособность оффера, длительность процесса, бренд работодателя и т. д.</li>
+  </ul>
+  <p>Чтобы понимать, как идёт найм по каждой конкретной открытой роли, смотрите также на конверсию по архетипам кандидатов на каждом шаге. Эти метрики подскажут, нужно ли менять подход, чтобы оптимизировать стратегию рекрутинга.</p>
+</section>
+
+<section class="section" id="s5">
+  <div class="sec-no">05</div>
+  <h2>Команда рекрутинга</h2>
+  <div class="glance">
+    <div class="lbl">Раздел вкратце</div>
+    <ul>
+      <li>Рекрутинг — ключевая компетенция, поэтому не стоит полагаться на внешних рекрутеров; собственная команда рекрутинга, сфокусированная исключительно на ваших потребностях в найме, поможет сохранить контроль над качеством и обходится дешевле.</li>
+      <li>Стройте команду рекрутинга так же, как команду продаж: набирайте людей, умеющих находить и вовлекать правильных кандидатов, и задавайте правильные стимулы и KPI.</li>
+      <li>Начните с простой структуры в подчинении у руководителя рекрутинга: рекрутеры и сорсеры ведут процесс рекрутинга, операционный менеджер выстраивает процессы, координатор рекрутинга берёт на себя административные задачи.</li>
+      <li>Размер команды зависит от потребностей в найме: один рекрутер закрывает 4–7 ролей в квартал, а число людей в остальных ролях растёт пропорционально.</li>
+      <li>Масштабируя команду, организуйте рекрутеров по бизнес-функциям, чтобы использовать синергию найма на похожие роли, и добавляйте тимлидов и менеджеров для управления командой.</li>
+      <li>Платите рекрутерам квартальные бонусы деньгами, напрямую привязанные к проценту выполнения их квот.</li>
+    </ul>
+  </div>
+
+  <h3>Аргументы за внутреннюю команду рекрутинга</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Внутренняя команда рекрутинга необходима, когда вы начинаете масштабироваться</p></div>
+    <div class="compare">
+      <div class="col"><h5>Рекрутинг — ключевая компетенция</h5><p style="margin:0;font-size:15px">привлечение A-игроков даёт стратегическое преимущество</p></div>
+      <div class="col"><h5>Полный фокус на ваших потребностях</h5><p style="margin:0;font-size:15px">с ясным пониманием ваших приоритетов и нюансов бизнеса</p></div>
+      <div class="col"><h5>Контроль над качеством</h5><p style="margin:0;font-size:15px">обеспечение последовательности и высокой планки таланта</p></div>
+      <div class="col"><h5>Эффективность затрат</h5><p style="margin:0;font-size:15px">расходы на сторонних рекрутеров могут вырасти очень существенно</p></div>
+    </div>
+  </div>
+  <p>Невозможно масштабировать технологическую компанию без первоклассной внутренней команды рекрутинга. Revolut усвоил это на горьком опыте: через несколько лет найм стал узким местом. Внешние рекрутеры были слишком медленными, слишком дорогими и не могли дать достаточно качественных кандидатов. Рост застопорился, пока компания не построила внутреннюю выделенную организацию рекрутинга — отдельную от HR, созданную, чтобы двигаться быстро и нанимать в масштабе.</p>
+  <p>Внутренний рекрутинг критически важен по многим причинам:</p>
+  <ul>
+    <li><strong>Рекрутинг — ключевая компетенция</strong> — привлечение и удержание A-игроков является долгосрочным стратегическим преимуществом; внутренняя команда сможет находить и вовлекать кандидатов, которые не только технически квалифицированы, но и совместимы с вашей культурой</li>
+    <li><strong>Полный фокус на ваших потребностях в найме</strong> — сторонние рекрутеры одновременно жонглируют несколькими клиентами; внутренняя команда полностью погружена в нюансы вашего бизнеса и быстро реагирует на смену приоритетов</li>
+    <li><strong>Контроль над качеством</strong> — внутренняя выделенная команда даёт полный контроль над процессом найма, от сорсинга и скрининга до интервью и онбординга, обеспечивая последовательность и более высокую планку таланта</li>
+    <li><strong>Эффективность затрат</strong> — хотя создание отдельной команды поначалу может казаться дорогим, в итоге оно может оказаться выгоднее, поскольку расходы на сторонних рекрутеров способны вырасти очень существенно</li>
+  </ul>
+
+  <h3>Строим рекрутинговую «фабрику»</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Стройте команду рекрутинга как команду продаж мирового класса</p></div>
+    <div class="compare">
+      <div class="col"><h5>Ориентация на аутбаунд</h5><p style="margin:0;font-size:15px">проактивный выход на кандидатов</p></div>
+      <div class="col"><h5>Технологичность</h5><p style="margin:0;font-size:15px">использование CRM-подобных инструментов</p></div>
+      <div class="col"><h5>Опора на данные</h5><p style="margin:0;font-size:15px">мониторинг и анализ результативности</p></div>
+      <div class="col"><h5>Квоты</h5><p style="margin:0;font-size:15px">вознаграждение рекрутеров привязано к целям</p></div>
+    </div>
+  </div>
+  <p>Стройте команду рекрутинга так, как строили бы команду продаж мирового класса.</p>
+  <p>У рекрутинга много общего с классическими продажами — построение отношений, эффективная коммуникация, понимание потребностей и мотивации, переговоры, — поэтому лучшие практики часто переносимы:</p>
+  <ul>
+    <li><strong>Ориентация на аутбаунд:</strong> рекрутеры должны проактивно искать и вовлекать лучших, а не только фильтровать входящие отклики</li>
+    <li><strong>Технологичный найм:</strong> используйте CRM-подобные инструменты, чтобы отслеживать взаимодействия с кандидатами и выстраивать долгосрочные отношения (например, оставаться на связи с кандидатами, которые сейчас недоступны)</li>
+    <li><strong>Решения на основе данных:</strong> отслеживайте метрики пайплайна, конверсию между этапами и скорость найма, чтобы оптимизировать результативность</li>
+    <li><strong>Рекрутеры на квотах:</strong> бóльшая часть вознаграждения рекрутера должна зависеть от выполнения квартальных квот</li>
+  </ul>
+
+  <h3>Структура и масштабирование организации рекрутинга</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Начните с простой структуры команды рекрутинга</p></div>
+    <ul class="org">
+      <li><b>Руководитель рекрутинга</b>
+        <ul>
+          <li><b>Операционная команда</b> <span class="r">— операционный менеджер</span></li>
+          <li><b>Команда координации</b> <span class="r">— координатор рекрутинга</span></li>
+          <li><b>Команда рекрутинга</b> <span class="r">— 2–3 рекрутера, 1–2 сорсера</span></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+  <p>Мы рекомендуем начать с простой структуры команды рекрутинга: один операционный менеджер, один координатор рекрутинга, а также рекрутеры и сорсеры — все в подчинении у руководителя рекрутинга. Число рекрутеров и сорсеров зависит от вашей квоты найма:</p>
+  <ul>
+    <li>рекрутер может закрывать 4–7 ролей в квартал</li>
+    <li>сорсер может поддерживать двух рекрутеров</li>
+  </ul>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">Масштабируйте команду рекрутинга по вертикалям вашего бизнеса</p></div>
+    <ul class="org">
+      <li><b>Руководитель рекрутинга</b>
+        <ul>
+          <li><b>Операционная команда</b> <span class="r">— операционный менеджер, аналитик данных</span></li>
+          <li><b>Команда координации</b> <span class="r">— руководитель координации, координаторы рекрутинга</span></li>
+          <li><b>Менеджер по рекрутингу</b>
+            <ul>
+              <li><b>Тимлид</b> → <b>Команда рекрутинга для продаж</b> <span class="r">— 5–10 рекрутеров, 2–5 сорсеров</span></li>
+              <li><b>Тимлид</b> → <b>Команда рекрутинга для инженерии</b> <span class="r">— 5–10 рекрутеров, 2–5 сорсеров</span></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+  <p>По мере роста потребностей в найме мы рекомендуем соответственно корректировать размер и структуру команды:</p>
+  <ul>
+    <li>добавьте вторую команду, когда рекрутеров станет больше 10</li>
+    <li>организуйте команды рекрутинга по вертикалям — по функциям вашей компании</li>
+    <li>добавьте новые управленческие роли: тимлид управляет командой из 10–15 рекрутеров и сорсеров, а менеджер по рекрутингу — 5–7 тимлидами</li>
+    <li>добавляйте координаторов рекрутинга из расчёта один на 9 рекрутеров</li>
+    <li>добавьте аналитика данных для поддержки операций рекрутинга</li>
+  </ul>
+  <p>В целом размер и структура команды рекрутинга должны расти в соответствии с вашими целями по найму:</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Объём найма</th><th>Рекомендуемая структура команды</th></tr></thead>
+      <tbody>
+        <tr><td>0–10 наймов в квартал</td><td>Рекрутер + координатор</td></tr>
+        <tr><td>10–50 наймов в квартал</td><td>3–5 рекрутеров, 1 сорсер на 2 рекрутеров, операционный менеджер, координатор</td></tr>
+        <tr><td>50+ наймов в квартал</td><td>Специализированные команды рекрутинга по функциям, тимлиды, аналитик данных</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h4>Роли в команде рекрутинга</h4>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Роль</th><th>Описание</th><th>Идеальный бэкграунд</th><th>Аналог в продажах</th></tr></thead>
+      <tbody>
+        <tr><td>Рекрутер</td><td>Владеет всем рекрутинговым пайплайном и ведёт его: от сорсинга и управления опытом кандидата до офферов и закрытия</td><td>Вёл кандидатов как full-cycle рекрутер в рекрутинговом агентстве из топ-10 или в ведущей технологической компании</td><td>Account Executive (менеджер по продажам)</td></tr>
+        <tr><td>Сорсер</td><td>Поддерживает рекрутеров, находя наиболее релевантных кандидатов на роль: просматривает резюме и джоб-порталы, пишет потенциальным кандидатам</td><td>Диплом бакалавра топового университета и не менее 6 месяцев опыта сорсинга в технологической компании или агентстве</td><td>Business Development (развитие бизнеса)</td></tr>
+        <tr><td>Руководитель рекрутинга</td><td>Управляет командой рекрутинга, разрабатывает стратегию найма в партнёрстве с релевантными бизнес-стейкхолдерами, обеспечивает правильные процессы</td><td>5+ лет опыта управления командами рекрутинга в быстрорастущей компании или сильный операционный руководитель с опытом найма</td><td>Руководитель продаж</td></tr>
+        <tr><td>Операционный менеджер по рекрутингу</td><td>Выстраивает и улучшает процессы во всей команде рекрутинга для повышения эффективности и результативности</td><td>2–4 года опыта в операциях или построении процессов в быстрорастущей компании либо консалтинговый бэкграунд</td><td>Sales Ops Manager (менеджер по операциям продаж)</td></tr>
+        <tr><td>Координатор рекрутинга</td><td>Ведёт административные задачи вокруг рекрутинга: систему отслеживания кандидатов (ATS), расписание интервью и процесс сертификации интервьюеров</td><td>Административный или операционный опыт в быстрорастущей компании</td><td>Администратор продаж</td></tr>
+        <tr><td>Аналитик данных</td><td>Строит дашборды для мониторинга результативности департамента рекрутинга и готовит ad-hoc анализ и бизнес-инсайты</td><td>Стандартный бэкграунд аналитика данных с опытом 2+ лет в быстрорастущей компании</td><td>Аналитика продаж</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Квоты и стимулы рекрутеров</h3>
+  <div class="fig">
+    <div class="fig-head"><p class="fig-title">У каждой роли в рекрутинге есть квоты, отражающие её цели</p></div>
+    <div class="kpis" style="margin-top:0">
+      <div class="kpi"><div class="lbl k">Рекрутеры · 75 %</div><div class="v">число наймов</div><div class="d">учитывается в момент подписания оффера</div></div>
+      <div class="kpi"><div class="lbl k">Рекрутеры · 25 %</div><div class="v">отклонение от бенчмарка</div><div class="d">процент, на который превышены зарплатные бенчмарки для новых сотрудников</div></div>
+      <div class="kpi"><div class="lbl k">Сорсеры · 100 %</div><div class="v">число офферов</div><div class="d">среди найденных ими кандидатов; варьируется в зависимости от сениорности и роли</div></div>
+    </div>
+    <p class="fig-cap" style="margin-top:0">Цели тимлидов включают совокупные квоты их команд.</p>
+  </div>
+  <p>Чтобы построить высокорезультативную команду найма, квоты и стимулы должны быть структурированы как в организации продаж: измеряйте результат и влияние.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Роль</th><th>Метрика</th><th>Цель</th><th>Вес в бонусе</th></tr></thead>
+      <tbody>
+        <tr><td rowspan="2">Рекрутер</td><td>Число наймов: учитывается в момент подписания оффера, чтобы отразить ответственность рекрутеров за закрытие ролей</td><td><ul><li>4–7 обычных ролей</li><li>10–25 массовых ролей (например, поддержка клиентов)</li><li>1–2 руководящие роли, в зависимости от сениорности</li></ul></td><td><span class="pt">75 %</span></td></tr>
+        <tr><td>Отклонение от зарплатного бенчмарка: процент, на который превышены зарплатные бенчмарки для новых сотрудников</td><td><ul><li>Обычно калибруется на уровне 10–15 % в зависимости от вертикали и допустимого бюджета</li></ul></td><td><span class="pt">25 %</span></td></tr>
+        <tr><td>Сорсер</td><td>Число офферов: офферы, сделанные найденным им кандидатам</td><td><ul><li>6–9 обычных ролей</li><li>20–40 массовых ролей (например, поддержка клиентов)</li></ul></td><td><span class="pt">100 %</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Бонусы следует выплачивать ежеквартально и деньгами, рассчитывая их как процент от базового оклада. Этот процент определяется результативностью сотрудника относительно его заранее заданных квот.</p>
+  <h4>Бонусы рассчитываются по проценту выполнения квот за квартал</h4>
+  <div class="formula">
+    <span class="box">Вес<small>каждой квоты</small></span><span class="op">×</span>
+    <span class="box">Процент выполнения<small>каждой квартальной квоты</small></span><span class="op">=</span>
+    <span class="box">Квартальный performance score</span><span class="op">→</span>
+    <span class="box">Квартальный бонус<small>% от годовой базовой компенсации, деньгами</small></span>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Performance score (пример)</th><th>Квартальный бонус</th></tr></thead>
+      <tbody>
+        <tr><td>менее 60 %</td><td>—</td></tr>
+        <tr><td>60–99 %</td><td>—</td></tr>
+        <tr><td>100–149 %</td><td><span class="pt">12,5 %</span></td></tr>
+        <tr><td>150–199 %</td><td><span class="pt">25 %</span></td></tr>
+        <tr><td>200 % и выше</td><td><span class="pt">50 %</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">
+    <div class="lbl">Пример — расчёт performance score</div>
+    <p>Performance score — это средневзвешенный процент выполнения по нескольким квотам. Рассмотрим пример за Q2 для рекрутера.</p>
+    <p>Он выполнил цель по наймам на 120 % (6 из 5) и цель по отклонению от зарплатного бенчмарка на 100 %. Каждая взвешивается: 120 % × 75 % + 100 % × 25 % = 115 % — performance score.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>KPI</th><th>Вес</th><th>Цель</th><th>Факт</th><th>Выполнение</th></tr></thead>
+        <tbody>
+          <tr><td>Цель по наймам</td><td>75 %</td><td>5</td><td>6</td><td><span class="pt">120 %</span></td></tr>
+          <tr><td>Отклонение от зарплатного бенчмарка</td><td>25 %</td><td>менее 12 %</td><td>0 %</td><td><span class="pt">100 %</span></td></tr>
+          <tr><td colspan="4"><strong>Средний процент выполнения</strong> — 120 % × 75 % + 100 % × 25 %</td><td><span class="pt"><strong>115 %</strong></span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin:0">Performance score 115 % за Q2 соответствует квартальному бонусу 12,5 %. Процент бонуса применяется к совокупной годовой базовой компенсации рекрутера. Если базовый оклад рекрутера — $50 тыс. в год, его бонус за Q2 составит $6,25 тыс.</p>
+  </div>
+</section>
+
+<section class="section" id="s6">
+  <div class="sec-no">06</div>
+  <h2>Пример плейбука | Дата-инженеры</h2>
+  <p>Ниже приведён пример рекрутингового плейбука для роли дата-инженера. Если вы скейлап на стадии Series A, свяжитесь с QuantumLight, чтобы получить доступ к полному плейбуку по той роли, которую вы ищете.</p>
+
+  <h3>О роли</h3>
+  <p>От всех инженеров, независимо от специализации, ожидается соответствие высокой планке по фундаментальным основам разработки: проектирование систем, качество кода и понимание полного жизненного цикла разработки. Специализация важна, но каждый инженер должен мыслить целостно и писать код production-уровня. Специализированные роли, такие как дата-инжиниринг, строятся на этом фундаменте, но не заменяют его.</p>
+
+  <h3>Скоркарды навыков и планка таланта</h3>
+  <p>Планка найма для инженеров опирается на единый набор ключевых навыков:</p>
+  <ul>
+    <li><strong>Жизненный цикл ПО:</strong> способность управлять этапами программного проекта от замысла до вывода из эксплуатации</li>
+    <li><strong>Архитектура:</strong> способность проектировать и планировать структуру, организацию и компоненты программной системы или приложения</li>
+    <li><strong>Программирование (общее):</strong> способность писать, понимать и создавать программы с использованием языков программирования</li>
+    <li><strong>Решение проблем:</strong> способность логически раскладывать сложные проблемы от первых принципов и решать их с помощью здравого смысла и критического мышления</li>
+  </ul>
+  <p>Сверх этого специализированные навыки дата-инженера включают:</p>
+  <ul>
+    <li><strong>Программирование (Python):</strong> способность писать, понимать и работать с языком программирования Python</li>
+    <li><strong>Дата-инжиниринг:</strong> способность проектировать, строить и поддерживать пайплайны и инфраструктуру данных, обеспечивающие эффективный и надёжный сбор, хранение и обработку данных</li>
+    <li><strong>Инфраструктура (IaC, облако и т. д.):</strong> способность настраивать, конфигурировать, администрировать и оптимизировать облачные вычислительные среды и ресурсы</li>
+  </ul>
+  <p>Ожидания зависят от сениорности, на которую вы нанимаете:</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Навык</th><th>Junior</th><th>Mid</th><th>Senior</th><th>Lead</th></tr></thead>
+      <tbody>
+        <tr><td>Жизненный цикл ПО</td><td><span class="lv">Базовый</span></td><td><span class="lv">Средний</span></td><td><span class="lv">Средний</span></td><td><span class="lv">Продвинутый</span></td></tr>
+        <tr><td>Архитектура</td><td><span class="lv na">н/п</span></td><td><span class="lv">Базовый</span></td><td><span class="lv">Средний</span></td><td><span class="lv">Продвинутый</span></td></tr>
+        <tr><td>Программирование (общее)</td><td><span class="lv">Базовый</span></td><td><span class="lv">Средний</span></td><td><span class="lv">Средний</span></td><td><span class="lv">Продвинутый</span></td></tr>
+        <tr><td>Решение проблем</td><td><span class="lv">Базовый</span></td><td><span class="lv">Базовый</span></td><td><span class="lv">Средний</span></td><td><span class="lv">Продвинутый</span></td></tr>
+        <tr><td>Программирование (Python)</td><td><span class="lv">Базовый</span></td><td><span class="lv">Средний</span></td><td><span class="lv">Средний</span></td><td><span class="lv">Продвинутый</span></td></tr>
+        <tr><td>Дата-инжиниринг</td><td><span class="lv">Базовый</span></td><td><span class="lv">Базовый</span></td><td><span class="lv">Базовый</span></td><td><span class="lv">Продвинутый</span></td></tr>
+        <tr><td>Инфраструктура (IaC, облако, …)</td><td><span class="lv na">н/п</span></td><td><span class="lv">Базовый</span></td><td><span class="lv">Средний</span></td><td><span class="lv">Средний</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Эти навыки оцениваются на протяжении всего процесса интервью с помощью структурированных скоркардов с наблюдаемым поведением; ожидается, что кандидаты достигнут минимального порога или превзойдут его по всем релевантным областям. Например, для навыка «Программирование на Python»:</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Уровень владения</th><th>Требования</th></tr></thead>
+      <tbody>
+        <tr><td>Базовый</td><td><ul><li>Использует «питоничные» конструкции языка (например, оператор for, декораторы)</li><li>Использует базовые возможности выбранных фреймворков (не изобретает велосипед); примеры: использует FastAPI, но только как веб-роутер; использует SQLAlchemy, но лишь для очень простых запросов и обновлений</li></ul></td></tr>
+        <tr><td>Средний</td><td><ul><li>Уместно использует аннотации типов и проверяет их инструментами статической типизации</li><li>Умеет распознавать нестандартный Python-код по гайдлайнам компании и приводить его в порядок</li><li>Способен использовать выбранные библиотеки и фреймворки на полную мощность и по лучшим практикам</li><li>Умеет изолировать и отлаживать проблемы в коде</li><li>Умеет писать и публиковать собственные библиотеки</li></ul></td></tr>
+        <tr><td>Продвинутый</td><td><ul><li>Элегантно решает задачи, используя полный потенциал языка</li><li>Осознанно применяет техники оптимизации кода и моделей развёртывания</li><li>Умеет писать расширения для Python</li></ul></td></tr>
+        <tr><td>Исключительный</td><td><ul><li>Глубоко понимает, как исполняется Python — в потоках, на событийных циклах и т. д.</li><li>При необходимости умеет оптимизировать производительность критичных методов и сервисов</li><li>Быстро схватывает плюсы и минусы новых фреймворков и библиотек, оценивая безопасность и эффективность их применения</li><li>Понимает байт-код Python и может точно объяснить ограничения и преимущества языка</li></ul></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Рекомендации по сорсингу</h3>
+  <p>Поиск сильных кандидатов на эту роль начинается с быстрой фильтрации профилей. Ниже — пример рекомендаций по скринингу для выявления высокопотенциальных кандидатов на роль дата-инженера:</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Фильтр скрининга</th><th>На что смотреть</th></tr></thead>
+      <tbody>
+        <tr><td>Минимальные требования</td><td><ul><li>Образование в области computer science или смежной</li><li>Опыт работы над программными продуктами на Python</li><li>Опыт работы с SQL- и NoSQL-базами данных</li><li>Опыт с Docker и Kubernetes</li><li>Опыт с публичными облаками (GCP или AWS)</li><li>Опыт с CI/CD, TDD и/или trunk-based development</li><li>Опыт работы с Big Data / MPP-аналитическими платформами</li></ul></td></tr>
+        <tr><td>Желательно</td><td><ul><li>Умение писать легко читаемый и поддерживаемый код на нескольких языках программирования</li><li>Понимание аспектов качества данных в системах хранилищ данных</li><li>Проектирование ETL (Airflow)</li><li>Хранилища данных и крупномасштабная обработка данных (Exasol, Trino, Iceberg)</li><li>Инфраструктура как код (Kubernetes, Helm, Terraform)</li><li>Опыт тюнинга производительности SQL</li><li>Опыт детекции аномалий/выбросов</li><li>Опыт с notebook-ориентированным процессом Data Science</li><li>Опыт с инструментами мониторинга и логирования: NewRelic, Grafana, Prometheus, ELK</li><li>Опыт внедрения принципов Data Mesh</li><li>Опыт работы в технологических стартапах</li></ul></td></tr>
+        <tr><td>Красные флаги</td><td><ul><li>Низкий средний балл (GPA)</li><li>Медленный карьерный рост</li><li>Частая смена работы</li><li>Нет опыта end-to-end разработки</li><li>Опыт только с одним языком программирования</li><li>Работа в медленной среде</li></ul></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Процесс найма</h3>
+  <p>Процесс найма спроектирован так, чтобы собирать качественные структурированные сигналы по ключевым областям навыков и при этом двигаться достаточно быстро, чтобы удерживать вовлечённость лучших кандидатов. Каждый этап целенаправленно проверяет конкретный набор способностей, без дублирования между интервью. Скоркарды применяются единообразно, что обеспечивает ясную независимую оценку и быстрые дебрифы.</p>
+  <p>Ниже — типичный процесс для дата-инженера уровня Mid:</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Этап</th><th>Что это</th></tr></thead>
+      <tbody>
+        <tr><td>Сорсинг</td><td>Рекрутеры должны проактивно выходить на кандидатов, отобранных по описанным выше рекомендациям</td></tr>
+        <tr><td>Скрининг-звонок <span class="dur">30 мин</span></td><td><p><strong>Цель:</strong> отсеять кандидатов без требуемого опыта</p><p><strong>Проводит:</strong> рекрутер</p><p><strong>Суть:</strong> рекрутер «продаёт» роль и проверяет опыт кандидата, как правило, тестируя минимальные знания Python и дата-инжиниринга короткими техническими вопросами. На что смотреть:</p><ul><li>Минимально необходимые знания Python</li><li>Минимально необходимые знания дата-инжиниринга</li><li>Минимально необходимый уровень английского и коммуникативных навыков</li><li>Карьерный рост — путь от Junior к Mid, Senior и Lead</li></ul></td></tr>
+        <tr><td>Интервью на решение проблем <span class="dur">45 мин</span></td><td><p><strong>Цель:</strong> оценить навык решения проблем</p><p><strong>Проводит:</strong> сертифицированный интервьюер</p><p><strong>Суть:</strong> оценивает способность кандидата подходить к незнакомым, неоднозначным проблемам с помощью структурированного мышления от первых принципов; основано на реальном кейсе и не является техническим по природе. На что смотреть:</p><ul><li>Ясное мышление «сверху вниз» и логическая структура</li><li>Рассуждения на основе данных</li><li>Признаки распознавания паттернов или переносимых ментальных моделей</li><li>Сильные вопросы для уточнения рамок и ограничений</li></ul></td></tr>
+        <tr><td>Техническое интервью <span class="dur">60 мин</span></td><td><p><strong>Цель:</strong> проверить владение ключевым инструментарием дата-инженера и здравые практики жизненного цикла ПО (жизненный цикл ПО, дата-инжиниринг и инфраструктура)</p><p><strong>Проводит:</strong> дата-инженер</p><p><strong>Суть:</strong> теоретические вопросы о Data Ops и жизненном цикле ПО, а также примеры того, как кандидат решал такие задачи в реальной жизни. На что смотреть:</p><ul><li>Здравый подход к качеству данных и выводу в продакшен (использование тестов, CI, PR и т. д.)</li><li>Глубокие знания в области транзакций баз данных</li><li>Владение практикой и теорией баз данных</li></ul></td></tr>
+        <tr><td>Бар-рейзер <span class="dur">60 мин</span></td><td><p><strong>Цель:</strong> установить, есть ли у кандидата мотивация и установка A-игрока и соответствует ли он ключевым ценностям компании</p><p><strong>Проводит:</strong> сертифицированный интервьюер</p><p><strong>Суть:</strong> пожалуй, самое важное интервью в компании и инструмент, с помощью которого «поднимают планку» и нанимают людей с высокими достижениями и культурой совершенства — в соответствии с ценностями компании. На что смотреть:</p><ul><li>История достижений</li><li>Культурное соответствие ценностям компании</li></ul></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="section" id="s7" style="border-bottom:0">
+  <div class="sec-no">07</div>
+  <h2>В фокусе | Revolut People</h2>
+  <p>В Revolut мы считаем, что рекрутинг — фундамент плотности талантов. Поэтому мы построили собственную систему с нуля: чтобы помочь нашим командам нанимать блестящих людей — быстро, последовательно и уверенно.</p>
+  <p>Модуль рекрутинга Revolut People спроектирован вокруг одной идеи: каждый найм должен поднимать планку. Пока большинство систем отслеживания кандидатов (ATS) оптимизируют эффективность процесса, мы сосредоточились на повышении качества найма.</p>
+  <p>Мы используем структурированные данные, предиктивные инсайты и ИИ, чтобы снизить шум и предвзятость и помочь командам принимать более качественные решения.</p>
+  <p>Теперь эта система доступна компаниям за пределами Revolut — та самая, что помогла нам вырасти до 10 000+ сотрудников и обрабатывать более 2 миллионов кандидатов по всему миру в год.</p>
+  <a class="cta" href="https://revolutpeople.com/contact-us?utm_source=website&amp;utm_medium=quantumlight&amp;utm_campaign=recruitment-playbook">Записаться на бесплатный пробный период Revolut People</a>
+  <p class="fig-cap">Решение доступно компаниям с зарегистрированным юридическим лицом в Европе и Великобритании; для всех остальных стран открыт лист ожидания.</p>
+
+  <h4>Находите правильного члена команды — каждый раз</h4>
+  <p>Начните с определения того, как выглядит совершенство. Revolut People позволяет задать требования для каждой роли, объединяя технические навыки, поведенческие маркеры и культурные атрибуты. Эти фреймворки становятся основой для структурированных процессов найма и скоркардов интервью, помогая командам оценивать кандидатов последовательно и сопоставлять их потенциал с внутренними данными о результативности.</p>
+  <h4>Распознавайте высокий потенциал с первого взгляда</h4>
+  <p>Система сочетает традиционные функции ATS — единый карьерный портал и прозрачность пайплайна — с более глубокой аналитикой. С помощью ИИ-скрининга резюме Revolut People автоматически сопоставляет кандидатов с открытыми ролями по заранее заданным паттернам навыков и опыта. Рекрутеры могут сосредоточиться на профилях с самым высоким сигналом, не упуская таланты, которые иначе остались бы незамеченными.</p>
+  <h4>Нанимайте уверенно</h4>
+  <p>Revolut People привносит структуру в каждое интервью. Нанимающие менеджеры могут создавать фреймворки интервью под конкретные роли — с подсказками, что спрашивать и как оценивать. А новая функция AI Interview &amp; Summarisation записывает и анализирует беседы, формируя точные резюме и инсайты о кандидате, не нарушая хода разговора.</p>
+  <p>Что отличает систему — это способность предсказывать результативность в первый год. Связывая данные по всему жизненному циклу сотрудника, мы моделируем, какие кандидаты с наибольшей вероятностью получат высокие оценки результативности в первые шесть месяцев, — помогая командам принимать уверенные решения, основанные не только на интуиции, но и на будущем потенциале.</p>
+  <h4>Отслеживайте результативность интервьюеров</h4>
+  <p>Отличный найм — это не только о кандидате. Revolut People оценивает и результативность интервьюеров, выявляя закономерности в качестве обратной связи, соответствии скоркарду и согласованности между интервью-панелями. В результате система помогает командам становиться лучше со временем, замыкая более тесные циклы между опытом кандидата и развитием рекрутеров.</p>
+  <h4>Фокус на талантах, а не на администрировании</h4>
+  <p>Каждый ручной шаг, который можно автоматизировать, автоматизирован. Планирование интервью, сбор обратной связи, обновление статусов кандидатов и внутренние уведомления выполняет платформа — сокращая задержки в координации и время до найма. Рекрутеры тратят меньше времени на логистику и больше — на то, что действительно важно: быстрый отбор и привлечение лучших талантов.</p>
+  <a class="cta" href="https://revolutpeople.com/contact-us?utm_source=website&amp;utm_medium=quantumlight&amp;utm_campaign=recruitment-playbook">Записаться на бесплатный пробный период Revolut People</a>
+</section>
+
+<footer class="end">
+  <p>Перевод плейбука «Hiring Top Talent» (QuantumLight Capital). Оригинальные страницы: <a href="https://quantumlightcapital.com/playbooks/hiring">обзор</a> · <a href="https://quantumlightcapital.com/playbooks/hiring/scale-up-ready-profiles">01</a> · <a href="https://quantumlightcapital.com/playbooks/hiring/three-interviews-for-success">02</a> · <a href="https://quantumlightcapital.com/playbooks/hiring/setting-a-talent-framework">03</a> · <a href="https://quantumlightcapital.com/playbooks/hiring/standardised-hiring-process">04</a> · <a href="https://quantumlightcapital.com/playbooks/hiring/recruitment-team">05</a> · <a href="https://quantumlightcapital.com/playbooks/hiring/playbook-example-engineers">06</a> · <a href="https://quantumlightcapital.com/playbooks/hiring/spotlight-revolut-people">07</a>. Все права на исходные материалы принадлежат их владельцам.</p>
+</footer>
+</main>
+</div>
+</div>
+<script>
+(function(){
+  var box=document.getElementById('tocbox');
+  var narrow=function(){return window.matchMedia('(max-width:860px)').matches;};
+  if(box&&narrow()){box.open=false;}
+  var links=[].slice.call(document.querySelectorAll('.toc a[href^="#"]'));
+  var secs=[].slice.call(document.querySelectorAll('main .section'));
+  function setActive(id){links.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+id);});}
+  if('IntersectionObserver' in window){
+    var visible={};
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){visible[e.target.id]=e.isIntersecting;});
+      var first=secs.filter(function(s){return visible[s.id];})[0];
+      if(first){setActive(first.id);}
+    },{rootMargin:'-10% 0px -70% 0px',threshold:0});
+    secs.forEach(function(s){io.observe(s);});
+  }
+  links.forEach(function(a){a.addEventListener('click',function(){if(box&&narrow()){box.open=false;}});});
+})();
+</script>
+</body>
+</html>
