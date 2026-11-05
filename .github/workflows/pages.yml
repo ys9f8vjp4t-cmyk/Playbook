@@ -1,0 +1,44 @@
+# Публикует клиент Po'Nopoly (папка ponopoly/) на GitHub Pages.
+# В настройках репозитория: Settings → Pages → Source: GitHub Actions.
+name: Deploy Po'Nopoly to GitHub Pages
+# Запускается вручную (Actions → Deploy Po'Nopoly → Run workflow) или при пуше в main/master.
+on:
+  push:
+    branches: [main, master]
+    paths: ['ponopoly/**', '.github/workflows/pages.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install --no-audit --no-fund
+        working-directory: ponopoly
+      - run: npm test
+        working-directory: ponopoly
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare static site
+        run: |
+          mkdir -p site
+          cp -r ponopoly/index.html ponopoly/config.js ponopoly/css ponopoly/js site/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: site }
+      - id: deployment
+        uses: actions/deploy-pages@v4

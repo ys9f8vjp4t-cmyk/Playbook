@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#1a2a35">
+  <meta name="description" content="Po'Nopoly — онлайн-версия пародийной монополии из фильма «Не грози Южному Централу». Telegram Mini App.">
+  <title>Po'Nopoly</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%231a2a35'/%3E%3Ctext x='32' y='44' font-family='Impact,Arial Narrow,sans-serif' font-size='34' fill='%23d9a521' text-anchor='middle'%3EPO'%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500&family=Rubik:wght@400;500;600&family=UnifrakturCook:wght@700&display=swap">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
+  <script src="config.js"></script>
+</head>
+<body>
+
+<!-- ГЛАВНОЕ МЕНЮ -->
+<section class="screen" id="screen-menu">
+  <div class="wrap">
+    <div class="logo-block">
+      <div class="logo-band">PO'NOPOLY<small>by Darker Brothers</small></div>
+      <p class="tagline">Настолка из фильма «Не грози Южному Централу, попивая сок у себя в квартале». Теперь в Telegram.</p>
+      <div class="fine" id="menu-user"></div>
+    </div>
+    <div class="menu-list">
+      <button class="btn btn-gold" id="btn-continue" hidden>▶ Продолжить партию</button>
+      <button class="btn btn-gold" id="btn-rejoin" hidden>↩ Вернуться в онлайн-комнату</button>
+      <button class="btn btn-primary" id="btn-new">🎲 Новая игра (с ботами или на одном телефоне)</button>
+      <button class="btn" id="btn-online">🌐 Онлайн с друзьями</button>
+      <button class="btn" id="btn-rules">📖 Правила</button>
+    </div>
+    <p class="fine">Watts, Crenshaw, Roscoe's, Tax Evasion, Drive-By, No Chance, Community Service, Disconnect Notice — всё как на той самой доске. Нужна вся цветовая группа, чтобы строить хаты и особняки.</p>
+  </div>
+</section>
+
+<!-- НАСТРОЙКА ЛОКАЛЬНОЙ ИГРЫ -->
+<section class="screen" id="screen-setup">
+  <div class="wrap">
+    <div class="row between"><button class="btn btn-sm" data-back>‹ Назад</button><h2 style="margin:0">Новая игра</h2><span></span></div>
+    <div class="card-panel">
+      <h3>Игроки</h3>
+      <div id="setup-players" class="list"></div>
+      <button class="btn" id="btn-add-player">+ Добавить игрока</button>
+      <p class="fine">Несколько людей могут играть на одном телефоне, передавая его по кругу. Боты названы в честь героев фильма.</p>
+    </div>
+    <div class="card-panel">
+      <h3>Правила</h3>
+      <div class="field"><label for="set-cash">Стартовый капитал</label>
+        <select class="input" id="set-cash"><option value="1000">$1 000</option><option value="1500" selected>$1 500 (классика)</option><option value="2000">$2 000</option><option value="2500">$2 500</option></select></div>
+      <label class="check"><input type="checkbox" id="set-auctions" checked> Аукцион, если игрок не купил клетку</label>
+      <label class="check"><input type="checkbox" id="set-parking"> Штрафы и налоги копятся на Free Parking</label>
+    </div>
+    <button class="btn btn-primary btn-block" id="btn-start-local" style="min-height:54px;font-size:17px">Начать</button>
+  </div>
+</section>
+
+<!-- ОНЛАЙН -->
+<section class="screen" id="screen-online">
+  <div class="wrap">
+    <div class="row between"><button class="btn btn-sm" data-back>‹ Назад</button><h2 style="margin:0">Онлайн</h2><span class="conn" id="conn"></span></div>
+    <div id="online-join" class="card-panel">
+      <div class="row">
+        <button class="token-pick gold" id="online-token" title="Фишка">🚗</button>
+        <div class="field grow"><label for="online-name">Твоё имя</label><input class="input" id="online-name" maxlength="20" placeholder="Имя"></div>
+      </div>
+      <button class="btn btn-primary" id="btn-create-room">Создать комнату</button>
+      <div class="row">
+        <input class="input grow" id="online-code" maxlength="4" placeholder="КОД КОМНАТЫ" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase;letter-spacing:.2em;font-weight:600">
+        <button class="btn" id="btn-join-room">Войти</button>
+      </div>
+      <details id="online-advanced"><summary class="fine">Сервер</summary>
+        <div class="field" style="margin-top:8px"><label for="online-url">Адрес сервера комнат (WebSocket)</label><input class="input" id="online-url" placeholder="wss://…/ws" inputmode="url"></div>
+        <p class="fine">Сервер — папка <span class="kbd">server/</span> этого проекта. Пустое поле: клиент ищет сервер на своём же хосте.</p>
+      </details>
+    </div>
+    <div id="online-lobby" class="card-panel" hidden>
+      <h3>Код комнаты</h3>
+      <div class="code-big" id="lobby-code">····</div>
+      <div class="btn-row"><button class="btn btn-gold" id="btn-invite">Пригласить друзей</button><button class="btn" id="btn-copy-code">Скопировать код</button></div>
+      <p class="fine" id="lobby-link" style="word-break:break-all"></p>
+      <h3>Игроки</h3>
+      <div class="list" id="lobby-players"></div>
+      <div id="lobby-host">
+        <div class="btn-row"><button class="btn" id="btn-add-bot">+ Бот</button></div>
+        <div class="field" style="margin-top:10px"><label for="lobby-cash">Стартовый капитал</label>
+          <select class="input" id="lobby-cash"><option value="1000">$1 000</option><option value="1500">$1 500 (классика)</option><option value="2000">$2 000</option><option value="2500">$2 500</option></select></div>
+        <label class="check"><input type="checkbox" id="lobby-auctions"> Аукцион, если игрок не купил клетку</label>
+        <label class="check"><input type="checkbox" id="lobby-parking"> Штрафы копятся на Free Parking</label>
+        <button class="btn btn-primary btn-block" id="btn-start-online" style="margin-top:10px;min-height:54px">Начать игру</button>
+      </div>
+      <p class="fine" id="lobby-wait" hidden>Ждём, когда хост начнёт игру…</p>
+      <button class="btn btn-ghost" id="btn-leave-room">Выйти из комнаты</button>
+    </div>
+  </div>
+</section>
+
+<!-- ПРАВИЛА -->
+<section class="screen" id="screen-rules">
+  <div class="wrap">
+    <div class="row between"><button class="btn btn-sm" data-back>‹ Назад</button><h2 style="margin:0">Правила</h2><span></span></div>
+    <div class="card-panel" id="rules-body"></div>
+  </div>
+</section>
+
+<!-- ИГРА -->
+<section class="screen" id="screen-game">
+  <div class="pstrip" id="pstrip"></div>
+  <div class="board-area"><div class="board" id="board" aria-label="Доска Po'Nopoly"></div><div class="feed" id="feed" aria-live="polite"></div></div>
+  <div class="dock" id="dock"></div>
+</section>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
