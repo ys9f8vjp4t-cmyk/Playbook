@@ -288,7 +288,7 @@ export function renderFeed(st) {
   const last = st.log[st.log.length - 1];
   if (el) el.textContent = last ? last.t : '';
   const feed = $('#feed');
-  if (feed) feed.innerHTML = st.log.slice(-3).map((l) => `<div>${esc(l.t)}</div>`).join('');
+  if (feed) feed.innerHTML = st.log.slice(-12).reverse().map((l) => `<div>${esc(l.t)}</div>`).join('');
 }
 
 // ---------- modals ----------

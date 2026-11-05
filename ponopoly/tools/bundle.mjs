@@ -30,6 +30,7 @@ const body = html.slice(html.indexOf('<body>') + 6, html.indexOf('<script type="
 const head = html.slice(html.indexOf('<head>') + 6, html.indexOf('</head>'));
 const fonts = head.match(/<link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com[^>]*>/)[0];
 const icon = head.match(/<link rel="icon"[^>]*>/)[0];
+const appleMeta = head.match(/<meta name="apple-mobile-web-app-capable"[\s\S]*?<link rel="apple-touch-icon"[^>]*>/)[0];
 const config = (extra) => `<script>window.PONOPOLY_CONFIG = ${JSON.stringify({ serverUrl: '', botName: '', appName: '', ...extra })};</script>`;
 
 const full = `<!doctype html>
@@ -40,6 +41,7 @@ const full = `<!doctype html>
 <meta name="theme-color" content="#1a2a35">
 <title>Po'Nopoly</title>
 ${icon}
+${appleMeta}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 ${fonts}
 <style>
@@ -63,6 +65,7 @@ fs.writeFileSync(path.join(ROOT, 'dist', 'ponopoly.html'), full);
 
 const artifact = `<title>Po'Nopoly</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+${appleMeta}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 ${fonts}
 <style>

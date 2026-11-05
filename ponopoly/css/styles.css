@@ -25,7 +25,7 @@
   --font-cell: 'Oswald', 'Arial Narrow', sans-serif;
   --font-gothic: 'UnifrakturCook', 'Old English Text MT', 'Times New Roman', serif;
   --radius: 14px;
-  --board-size: min(100vw - 24px, 100vh - 230px, 620px);
+  --board-size: min(100vw - 24px, 100vh - 290px, 720px);
   --unit: calc(var(--board-size) / 12.1);
   color-scheme: light;
 }
@@ -130,7 +130,7 @@ a { color: var(--accent); }
 
 /* ---------- game screen ---------- */
 #screen-game { height: 100%; }
-#screen-game.active { display: grid; grid-template-rows: auto 1fr auto; grid-template-areas: "strip" "board" "dock"; height: 100%; min-height: 0; }
+#screen-game.active { display: grid; grid-template-rows: auto 1fr auto auto; grid-template-areas: "strip" "board" "feed" "dock"; height: 100%; min-height: 0; }
 .pstrip { grid-area: strip; display: flex; gap: 8px; overflow-x: auto; padding: 8px max(12px, env(safe-area-inset-left, 0px)) 6px; scrollbar-width: none; }
 .pstrip::-webkit-scrollbar { display: none; }
 .pchip { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 6px 10px 6px 6px; border-radius: 999px; background: var(--surface); border: 2px solid var(--line); cursor: pointer; min-width: 0; }
@@ -144,10 +144,10 @@ a { color: var(--accent); }
 .pchip .pjail { font-size: 12px; }
 .pchip .pbot { font-size: 11px; color: var(--muted); }
 
-.board-area { grid-area: board; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 0; padding: 4px; overflow: hidden; }
-.feed { width: var(--board-size); max-width: 100%; font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; padding-inline: 4px; }
+.board-area { grid-area: board; display: flex; align-items: center; justify-content: center; min-height: 0; padding: 4px; overflow: hidden; }
+.feed { grid-area: feed; width: var(--board-size); max-width: 100%; margin: 0 auto; font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; padding: 2px 8px 6px; max-height: 3.9em; overflow: hidden; min-width: 0; }
 .feed div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.feed div:last-child { color: var(--fg); }
+.feed div:first-child { color: var(--fg); }
 @media (max-height: 640px) { .feed { display: none; } }
 .board {
   position: relative; width: var(--board-size); height: var(--board-size); background: var(--board); border: 3px solid var(--board-line); border-radius: 6px;
@@ -221,11 +221,27 @@ a { color: var(--accent); }
 .dock .btn.pulse { animation: pulse 1.6s infinite; }
 @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 50% { box-shadow: 0 0 0 8px transparent; } }
 
-@media (min-width: 900px) {
-  #screen-game.active { grid-template-columns: 1fr 360px; grid-template-rows: auto 1fr; grid-template-areas: "board strip" "board dock"; }
+/* планшет и десктоп в альбомной ориентации: доска слева, панель справа */
+@media (min-width: 900px) and (orientation: landscape) {
+  #screen-game.active { grid-template-columns: 1fr minmax(320px, 380px); grid-template-rows: auto 1fr auto; grid-template-areas: "board strip" "board feed" "board dock"; }
   .pstrip { flex-wrap: wrap; overflow: visible; padding: 12px; align-content: flex-start; border-left: 1px solid var(--line); background: var(--surface); }
-  .dock { border-left: 1px solid var(--line); border-top: 0; justify-content: flex-end; }
-  :root { --board-size: min(100vh - 24px, 100vw - 400px, 760px); }
+  .feed { width: auto; max-width: none; margin: 0; max-height: none; overflow: auto; font-size: 14px; padding: 4px 16px; border-left: 1px solid var(--line); background: var(--surface); gap: 6px; }
+  .feed div { white-space: normal; padding: 4px 8px; border-left: 3px solid var(--line); border-radius: 0 6px 6px 0; }
+  .feed div:first-child { border-color: var(--gold); }
+  .dock { border-left: 1px solid var(--line); border-top: 1px solid var(--line); }
+  .dock .main-actions .btn { min-height: 56px; }
+  :root { --board-size: min(100vh - 24px, 100vw - 410px, 820px); }
+}
+/* планшет в портретной ориентации: доска во всю ширину, крупнее кнопки */
+@media (min-width: 700px) and (orientation: portrait) {
+  .pstrip { justify-content: center; padding-block: 12px; }
+  .pchip .pname { font-size: 15px; max-width: 160px; } .pchip .pcash { font-size: 15px; }
+  .feed { font-size: 15px; max-height: 4.2em; }
+  .dock { padding-inline: max(24px, env(safe-area-inset-left, 0px)) max(24px, env(safe-area-inset-right, 0px)); }
+  .dock .main-actions .btn { min-height: 58px; font-size: 18px; }
+  .dock .sub-actions .btn { font-size: 15px; min-height: 44px; }
+  .dock .status-line { font-size: 16px; }
+  :root { --board-size: min(100vw - 32px, 100vh - 320px, 820px); }
 }
 
 /* ---------- modals ---------- */

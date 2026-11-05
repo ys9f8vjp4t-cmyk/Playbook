@@ -160,6 +160,37 @@ try {
   proc.kill();
 }
 
+// ---------- iPad: портрет и альбом, ничего не выходит за экран (одностраничная сборка с диска) ----------
+{
+  const { execSync } = await import('node:child_process');
+  execSync(`${process.execPath} tools/bundle.mjs`, { cwd: ROOT, stdio: 'inherit' });
+  const browser3 = await chromium.launch();
+  try {
+    for (const [name, vp] of [['ipad-portrait', { width: 820, height: 1180 }], ['ipad-landscape', { width: 1180, height: 820 }], ['ipad-mini-landscape', { width: 1024, height: 768 }], ['ipad-pro-landscape', { width: 1366, height: 1024 }]]) {
+      const c = await browser3.newContext({ viewport: vp, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'ru-RU' });
+      const pg = await c.newPage(); watch(pg, name);
+      await pg.goto('file://' + path.join(ROOT, 'dist', 'ponopoly.html'));
+      await pg.waitForSelector('#screen-menu.active');
+      await pg.click('#btn-new'); await pg.click('#btn-start-local');
+      await pg.waitForSelector('#screen-game.active');
+      await pg.waitForFunction(() => !document.querySelector('#dock.busy') && document.querySelector('#dock [data-act="roll"]:not(:disabled)'));
+      await pg.click('#dock [data-act="roll"]');
+      await pg.waitForTimeout(1500);
+      const m = await pg.evaluate(() => {
+        const b = document.querySelector('#board').getBoundingClientRect();
+        const d = document.querySelector('#dock').getBoundingClientRect();
+        return { sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, sh: document.documentElement.scrollHeight, ch: document.documentElement.clientHeight, boardBottom: b.bottom, boardRight: b.right, boardW: b.width, dockTop: d.top };
+      });
+      if (m.sw > m.cw + 1) throw new Error(`${name}: горизонтальная прокрутка ${m.sw} > ${m.cw}`);
+      if (m.sh > m.ch + 1) throw new Error(`${name}: страница игры выше экрана ${m.sh} > ${m.ch}`);
+      if (m.boardBottom > m.dockTop + 1 && vp.width < 900) throw new Error(`${name}: доска заезжает под панель`);
+      log(name, `доска ${Math.round(m.boardW)}px, ок`);
+      await shot(pg, `15-${name}`);
+      await c.close();
+    }
+  } finally { await browser3.close(); }
+}
+
 // ---------- одностраничная сборка (dist/ponopoly.html) с диска ----------
 {
   const { execSync } = await import('node:child_process');
