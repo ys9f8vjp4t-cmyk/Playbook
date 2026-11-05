@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame, applyAction, PHASE, legalActions, rentFor, netWorth, liquidValue, EngineError, whoActs, mulberry32 } from '../js/engine.js';
-import { BOARD, JAIL_POS, CARD_BY_ID } from '../js/data.js';
+import { BOARD, JAIL_POS, CARD_BY_ID, sqName, term, botNames } from '../js/data.js';
+import { RU } from '../js/ru.js';
 
 // rng that produces an exact dice sequence: diceRng([3,4, 1,1]) → 3:4 then 1:1
 function diceRng(values) {
@@ -350,4 +351,34 @@ test('liquidValue учитывает постройки и залог', () => {
   const st = game(2);
   giveProp(st, 1, 'p1'); giveProp(st, 3, 'p1'); st.props[1].houses = 2; st.props[3].mortgaged = true;
   assert.equal(liquidValue(st, 'p1'), 1500 + 30 + 50);
+});
+
+test('полная русификация: названия, колоды и карточки в логе по-русски', () => {
+  const st = createGame({ players: [{ name: 'Вася' }, { name: 'Петя' }], settings: { lang: 'ru' }, seed: 3 });
+  act(st, 'roll', 'p1', {}, diceRng([1, 2])); // 3 — Roscoe's
+  assert.equal(sqName(st, 3), RU.squares[3].ru);
+  assert.match(st.log[st.log.length - 1].t, new RegExp(RU.squares[3].ru));
+  act(st, 'buy', 'p1'); act(st, 'end_turn', 'p1');
+  act(st, 'roll', 'p2', {}, diceRng([1, 1])); // 2 — Community Service
+  const last = st.log[st.log.length - 1].t;
+  assert.ok(last.includes(term(st, 'chest')), last);
+  assert.ok(last.includes(RU.cards[st.card.id]), last);
+  act(st, 'ack_card', 'p2');
+  // в больницу и обратно
+  const p = st.players[1]; p.inJail = true; p.pos = 10; st.phase = PHASE.ROLL; st.cur = 1; st.doubles = 0;
+  act(st, 'jail_pay', 'p2');
+  assert.match(st.log[st.log.length - 1].t, new RegExp(RU.terms.hospitalFrom));
+  // ни одной латинской буквы во всём журнале (кроме символа $)
+  const joined = st.log.map((l) => l.t).join('\n');
+  const hit = joined.match(/.{0,30}[A-Za-z].{0,30}/);
+  assert.ok(!hit, 'латиница в логе: ' + (hit ? hit[0] : ''));
+  // режим «как в фильме» по умолчанию, старые сохранения без lang тоже
+  const en = createGame({ players: [{ name: 'A' }, { name: 'B' }], seed: 3 });
+  delete en.settings.lang;
+  assert.equal(sqName(en, 3), "Roscoe's Chicken & Waffles");
+  assert.equal(term(en, 'hospital'), 'County Hospital');
+  assert.equal(botNames('ru').length, 8);
+  // каждая клетка и карточка переведены
+  for (let i = 0; i < 40; i++) { assert.ok(RU.squares[i] && RU.squares[i].ru && RU.squares[i].ruShort, `клетка ${i}`); assert.ok(!/[A-Za-z]/.test(RU.squares[i].ru + RU.squares[i].ruShort), `латиница в клетке ${i}`); }
+  for (const id of Object.keys(CARD_BY_ID)) assert.ok(RU.cards[id] && !/[A-Za-z]/.test(RU.cards[id]), `карточка ${id}`);
 });

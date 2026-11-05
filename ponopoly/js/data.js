@@ -1,4 +1,5 @@
-// Po'Nopoly — board data, cards, tokens.
+// Po'Nopoly — board data, cards, tokens, localisation helpers.
+import { RU } from './ru.js';
 // Names on the board follow the prop seen in "Don't Be a Menace to South Central
 // While Drinking Your Juice in the Hood" (1996): Watts, Roscoe's, Crenshaw, Oakland,
 // Echo Park, Alvarado, Florence, Pawn Shop, Nail Salon, Tax Evasion, Robbed,
@@ -144,8 +145,38 @@ export const PLAYER_COLORS = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#8e24
 export const BOT_NAMES = ['Ashtray', 'Loc Dog', 'Preach', 'Crazy Legs', 'Dashiki', 'Toothpick', 'Doo Rag', 'Old Dog'];
 
 export const DEFAULT_SETTINGS = {
+  lang: 'en',             // 'en' — названия как на доске из фильма, 'ru' — полная русификация
   startCash: 1500,
   auctions: true,          // аукцион, если игрок отказался покупать
   freeParkingPool: false,  // штрафы и налоги копятся на Free Parking
   maxPlayers: 6,
 };
+
+// ---------- localisation ----------
+// Термины в режиме «как в фильме» (интерфейс русский, названия — с реквизита).
+export const TERMS_EN = {
+  hospital: 'County Hospital', hospitalShort: 'County Hospital', hospitalIn: 'в County Hospital', hospitalFrom: 'из County Hospital',
+  visiting: 'навещает кореша в County Hospital', parking: 'Free Parking', parkingShort: 'Free Parking', go: 'GO',
+  chance: 'NO CHANCE', chanceShort: 'No Chance', chest: 'COMMUNITY SERVICE', chestShort: 'Comm. Service',
+  dn: 'Disconnect Notice', dnStamp: 'DISCONNECT NOTICE', dnUnder: 'под Disconnect Notice',
+  tax: 'Tax Evasion', taxShort: 'Tax Evasion', robbed: 'Robbed', robbedShort: 'Robbed',
+  driveby: 'Drive-By', drivebyShort: 'Drive-By', drivebyEvent: 'попал под Drive-By', og: 'OG района',
+  logo: "PO'NOPOLY", logoSub: 'by Darker Brothers',
+};
+export const LANGS = ['en', 'ru'];
+export function langOf(st) { return st && st.settings && st.settings.lang === 'ru' ? 'ru' : 'en'; }
+export function term(st, key) {
+  const lang = typeof st === 'string' ? st : langOf(st);
+  if (lang === 'ru') { if (key === 'logo') return RU.logo; if (key === 'logoSub') return RU.logoSub; return RU.terms[key] || TERMS_EN[key]; }
+  return TERMS_EN[key];
+}
+export function sqName(st, idx) { return (typeof st === 'string' ? st : langOf(st)) === 'ru' ? RU.squares[idx].ru : BOARD[idx].name; }
+export function sqShort(st, idx) {
+  const lang = typeof st === 'string' ? st : langOf(st);
+  return lang === 'ru' ? RU.squares[idx].ruShort.replace(/\|/g, '­') : BOARD[idx].short;
+}
+// Название клетки для текста журнала: по-русски — в кавычках, чтобы не спотыкаться о падежи.
+export function sqRef(st, idx) { return langOf(st) === 'ru' ? `«${sqName(st, idx)}»` : sqName(st, idx); }
+export function cardText(st, card) { return langOf(st) === 'ru' && RU.cards[card.id] ? RU.cards[card.id] : card.text; }
+export function botNames(lang) { return lang === 'ru' ? RU.bots : BOT_NAMES; }
+export function deckName(st, deck) { return term(st, deck === 'chance' ? 'chance' : 'chest'); }

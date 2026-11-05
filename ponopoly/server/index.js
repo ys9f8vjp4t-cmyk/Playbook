@@ -8,7 +8,8 @@ import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import { createGame, applyAction, PHASE, whoActs, EngineError } from '../js/engine.js';
 import { nextBotAction, botDelay } from '../js/bot.js';
-import { TOKENS, BOT_NAMES, DEFAULT_SETTINGS, PLAYER_COLORS } from '../js/data.js';
+import { TOKENS, BOT_NAMES, DEFAULT_SETTINGS, PLAYER_COLORS, LANGS, botNames } from '../js/data.js';
+import { RU } from '../js/ru.js';
 
 const PORT = Number(process.env.PORT) || 8080;
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -192,7 +193,7 @@ function handle(ws, msg) {
       if (room.state) throw new EngineError('Игра уже идёт');
       if (room.players.length >= 6) throw new EngineError('Комната заполнена');
       const used = new Set(room.players.map((p) => p.name));
-      const name = BOT_NAMES.find((n) => !used.has(n)) || `Бот ${room.players.length + 1}`;
+      const name = botNames(room.settings.lang).find((n) => !used.has(n)) || `Бот ${room.players.length + 1}`;
       addPlayer(room, { name, token: null, bot: true });
       broadcastRoom(room);
       return;
@@ -217,7 +218,13 @@ function handle(ws, msg) {
         startCash: [1000, 1500, 2000, 2500].includes(Number(s.startCash)) ? Number(s.startCash) : room.settings.startCash,
         auctions: typeof s.auctions === 'boolean' ? s.auctions : room.settings.auctions,
         freeParkingPool: typeof s.freeParkingPool === 'boolean' ? s.freeParkingPool : room.settings.freeParkingPool,
+        lang: LANGS.includes(s.lang) ? s.lang : room.settings.lang,
       };
+      // боты с именами по умолчанию получают имена на выбранном языке
+      for (const p of room.players) {
+        if (!p.bot) continue;
+        for (const names of [BOT_NAMES, RU.bots]) { const k = names.indexOf(p.name); if (k >= 0) { p.name = botNames(room.settings.lang)[k]; break; } }
+      }
       broadcastRoom(room);
       return;
     }

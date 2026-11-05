@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
-const ORDER = ['data', 'engine', 'bot', 'telegram', 'storage', 'online', 'ui', 'main'];
+const ORDER = ['ru', 'data', 'engine', 'bot', 'telegram', 'storage', 'online', 'ui', 'main'];
 
 function stripModule(src, name) {
   const exportedNames = [];

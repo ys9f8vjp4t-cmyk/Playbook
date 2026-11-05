@@ -49,6 +49,36 @@ try {
   await page.goto(base);
   await page.waitForSelector('#screen-menu.active');
   await shot(page, '01-menu');
+  // полная русификация: переключатель в меню → новая игра → доска по-русски
+  await page.click('#lang-seg [data-lang="ru"]');
+  await page.waitForFunction(() => document.querySelector('#menu-logo').textContent.indexOf("PO'NOPOLY") < 0);
+  await page.click('#btn-new');
+  await page.waitForSelector('#screen-setup.active');
+  const setLang = await page.$eval('#set-lang', (e) => e.value);
+  if (setLang !== 'ru') throw new Error('настройка языка не подхватилась в экране новой игры: ' + setLang);
+  const botName = await page.$eval('#setup-players .player-row:nth-child(2) input', (e) => e.value);
+  if (/[A-Za-z]/.test(botName)) throw new Error('имя бота не переведено: ' + botName);
+  await page.click('#btn-start-local');
+  await page.waitForSelector('#screen-game.active');
+  await page.waitForTimeout(400);
+  const ruCheck = await page.evaluate(() => ({ watts: document.querySelector('.cell[data-idx="1"] .name').textContent, logo: document.querySelector('.big-logo').textContent, latin: [...document.querySelectorAll('.cell .name')].map((n) => n.textContent).filter((t) => /[A-Za-z]/.test(t)) }));
+  if (!/Уоттс/.test(ruCheck.watts) || /PO'NOPOLY/.test(ruCheck.logo) || ruCheck.latin.length) throw new Error('доска не русифицирована: ' + JSON.stringify(ruCheck));
+  await page.click('.cell[data-idx="10"]');
+  await page.waitForSelector('.modal .deed');
+  const deedHead = await page.$eval('.modal .deed-head', (e) => e.textContent);
+  if (/[A-Za-z]/.test(deedHead)) throw new Error('карточка клетки не русифицирована: ' + deedHead);
+  await shot(page, '16-ru-board');
+  await page.evaluate(() => document.querySelector('.modal').remove());
+  // переключаем обратно через игровое меню и возвращаемся в меню
+  await page.click('#dock [data-act="menu"]');
+  await page.click('.modal [data-m="lang"]');
+  await page.waitForFunction(() => /WATTS/i.test(document.querySelector('.cell[data-idx="1"] .name').textContent));
+  log('ru: доска, карточки и боты по-русски, переключение туда-обратно работает');
+  await page.click('#dock [data-act="menu"]');
+  await page.click('.modal [data-m="leave"]');
+  await page.click('.modal [data-r="1"]');
+  await page.waitForSelector('#screen-menu.active');
+  await page.click('#lang-seg [data-lang="en"]');
   await page.click('#btn-new');
   await page.waitForSelector('#screen-setup.active');
   await page.fill('#setup-players .player-row:first-child input', 'Вася');

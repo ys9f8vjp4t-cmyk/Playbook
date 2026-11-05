@@ -1,5 +1,6 @@
 // Po'Nopoly — контроллер приложения: экраны, локальная игра с ботами, онлайн-комнаты, Telegram.
-import { BOARD, TOKENS, BOT_NAMES, DEFAULT_SETTINGS, PLAYER_COLORS } from './data.js';
+import { BOARD, TOKENS, BOT_NAMES, DEFAULT_SETTINGS, PLAYER_COLORS, LANGS, langOf, term, botNames, sqName } from './data.js';
+import { RU } from './ru.js';
 import { createGame, applyAction, PHASE, whoActs, current, legalActions, ownedBy, liquidValue, EngineError } from './engine.js';
 import { nextBotAction, botDelay } from './bot.js';
 import { initTelegram, tgUser, startParam, haptic, showBack, hideBack, inTelegram, shareInvite, inviteLink } from './telegram.js';
@@ -38,6 +39,7 @@ function viewer() {
 // ---------- экраны ----------
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === `screen-${id}`));
+  if (id !== 'game') document.documentElement.dataset.lang = prefLang();
   app.screen = id;
   window.scrollTo(0, 0);
   if (id === 'menu') hideBack(); else showBack(() => onBack());
@@ -54,6 +56,12 @@ function renderMenu() {
   const sess = Online.savedSession();
   $('#btn-rejoin').hidden = !sess;
   $('#menu-user').textContent = tgUser() ? `Привет, ${tgUser().name}!` : '';
+  const lang = prefLang();
+  document.documentElement.dataset.lang = lang;
+  $('#menu-logo').innerHTML = `${esc(term(lang, 'logo'))}<small>${esc(term(lang, 'logoSub'))}</small>`;
+  document.querySelectorAll('#lang-seg button').forEach((b) => b.classList.toggle('on', b.dataset.lang === lang));
+  $('#menu-fine-en').hidden = lang !== 'en';
+  $('#menu-fine-ru').hidden = lang !== 'ru';
   const cfg = window.PONOPOLY_CONFIG || {};
   $('#btn-online').hidden = !!cfg.disableOnline;
   if (cfg.disableOnline) $('#btn-rejoin').hidden = true;
@@ -61,14 +69,24 @@ function renderMenu() {
 
 // ---------- настройка локальной игры ----------
 function defaultName() { const u = tgUser(); return u ? u.name : (getPref('name', '') || 'Ты'); }
+function prefLang() { const l = getPref('lang', 'en'); return LANGS.includes(l) ? l : 'en'; }
+// Переименовать ботов с «именами по умолчанию» при смене языка доски.
+function renameDefaultBots(list, lang) {
+  const all = [BOT_NAMES, RU.bots];
+  for (const p of list) {
+    if (!p.bot) continue;
+    for (const names of all) { const k = names.indexOf(p.name); if (k >= 0) { p.name = botNames(lang)[k]; break; } }
+  }
+}
 
 function initSetup() {
+  const names = botNames(prefLang());
   app.setupPlayers = [
     { name: defaultName(), token: 'lowrider', bot: false },
-    { name: BOT_NAMES[1], token: 'pager', bot: true },
-    { name: BOT_NAMES[0], token: 'boombox', bot: true },
+    { name: names[1], token: 'pager', bot: true },
+    { name: names[0], token: 'boombox', bot: true },
   ];
-  app.setupSettings = { ...DEFAULT_SETTINGS, ...(getPref('settings', {}) || {}) };
+  app.setupSettings = { ...DEFAULT_SETTINGS, ...(getPref('settings', {}) || {}), lang: prefLang() };
   renderSetup();
 }
 
@@ -84,12 +102,13 @@ function renderSetup() {
       <button class="btn btn-xs btn-ghost" title="Убрать" ${app.setupPlayers.length <= 2 ? 'disabled' : ''}>✕</button>`;
     row.querySelector('.token-pick').addEventListener('click', () => pickToken(i));
     row.querySelector('input').addEventListener('input', (e) => { p.name = e.target.value; });
-    row.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => { p.bot = b.dataset.t === 'b'; if (p.bot && (!p.name || p.name === 'Ты')) p.name = BOT_NAMES.find((n) => !app.setupPlayers.some((q) => q.name === n)) || 'Бот'; renderSetup(); }));
+    row.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => { p.bot = b.dataset.t === 'b'; if (p.bot && (!p.name || p.name === 'Ты')) p.name = botNames(app.setupSettings.lang).find((n) => !app.setupPlayers.some((q) => q.name === n)) || 'Бот'; renderSetup(); }));
     row.querySelector('.btn-ghost').addEventListener('click', () => { app.setupPlayers.splice(i, 1); renderSetup(); });
     list.appendChild(row);
   });
   $('#btn-add-player').disabled = app.setupPlayers.length >= 6;
   $('#set-cash').value = String(app.setupSettings.startCash);
+  $('#set-lang').value = app.setupSettings.lang || 'en';
   $('#set-auctions').checked = !!app.setupSettings.auctions;
   $('#set-parking').checked = !!app.setupSettings.freeParkingPool;
 }
@@ -107,6 +126,8 @@ function readSettings() {
   app.setupSettings.startCash = Number($('#set-cash').value) || 1500;
   app.setupSettings.auctions = $('#set-auctions').checked;
   app.setupSettings.freeParkingPool = $('#set-parking').checked;
+  app.setupSettings.lang = LANGS.includes($('#set-lang').value) ? $('#set-lang').value : 'en';
+  setPref('lang', app.setupSettings.lang);
   setPref('settings', app.setupSettings);
 }
 
@@ -122,15 +143,17 @@ function startLocalFromSetup() {
 // ---------- игра ----------
 function startGame(mode, st) {
   app.mode = mode; app.st = st; app.dismissed = null; app.prevCash = {};
-  if (!app.refs) app.refs = UI.buildBoard($('#board'));
+  if (!app.refs || app.refs.lang !== langOf(st)) app.refs = UI.buildBoard($('#board'), langOf(st));
   showScreen('game');
   requestAnimationFrame(() => { sync(); if (mode === 'local') { persist(); scheduleBots(); } });
 }
 
-function persist() {
+function persist(now = false) {
   if (app.mode !== 'local' || !app.st) return;
   clearTimeout(app.saveTimer);
-  app.saveTimer = setTimeout(() => { saveGame(app.st); setPref('hasSave', app.st.phase !== PHASE.OVER); }, 300);
+  const st = app.st;
+  const save = () => { saveGame(st); setPref('hasSave', st.phase !== PHASE.OVER); };
+  if (now) save(); else app.saveTimer = setTimeout(save, 300);
 }
 
 function snapshotCash() { app.prevCash = Object.fromEntries(app.st.players.map((p) => [p.id, p.cash])); }
@@ -186,6 +209,8 @@ async function playEvents(ev) {
 function sync() {
   const st = app.st;
   if (!st || app.screen !== 'game') return;
+  if (!app.refs || app.refs.lang !== langOf(st)) app.refs = UI.buildBoard($('#board'), langOf(st));
+  document.documentElement.dataset.lang = langOf(st);
   UI.renderStrip(st, $('#pstrip'), ctx, app.prevCash);
   UI.renderBoard(st, app.refs);
   UI.positionTokens(st, app.refs);
@@ -308,7 +333,7 @@ function showTradeBuilder() {
   const fillGet = () => {
     const to = sel.value;
     const props = ownedBy(st, to);
-    sheet.querySelector('#get-props').innerHTML = props.map((i) => `<label class="check"><input type="checkbox" name="get" value="${i}"><span class="sw" style="--gc:${UI.colorOf(i)}"></span>${esc(BOARD[i].name)}${st.props[i].mortgaged ? ' (DN)' : ''}</label>`).join('') || '<div class="sub">нет клеток</div>';
+    sheet.querySelector('#get-props').innerHTML = props.map((i) => `<label class="check"><input type="checkbox" name="get" value="${i}"><span class="sw" style="--gc:${UI.colorOf(i)}"></span>${esc(sqName(st, i))}${st.props[i].mortgaged ? ` ${UI.dnTag(st)}` : ''}</label>`).join('') || '<div class="sub">нет клеток</div>';
     const toP = st.players.find((p) => p.id === to);
     sheet.querySelector('#get-card-wrap').hidden = !toP.jailCards.length;
     sheet.querySelector('#get-cash').max = toP.cash;
@@ -329,13 +354,15 @@ function showGameMenu() {
   const sheet = openModal(`<h2>Меню</h2><div class="list">
     <button class="btn" data-m="rules">Правила</button>
     <button class="btn" data-m="fast">${getPref('fast', false) ? '✓ ' : ''}Быстрые боты</button>
+    <button class="btn" data-m="lang" ${app.mode === 'online' ? 'disabled' : ''}>Доска: ${langOf(st) === 'ru' ? 'полностью по-русски' : 'как в фильме'} → ${langOf(st) === 'ru' ? 'как в фильме' : 'по-русски'}${app.mode === 'online' ? ' (задаёт хост)' : ''}</button>
     ${canSurrender ? `<button class="btn btn-danger" data-m="surrender">Сдаться (${esc(UI.pname(st, v))})</button>` : ''}
     <button class="btn" data-m="leave">${app.mode === 'online' ? 'Выйти из комнаты' : 'В главное меню'}</button>
     <button class="btn btn-ghost" data-close="1">Закрыть</button></div>`, { kind: 'menu' });
   sheet.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-m]'); if (!b) { if (e.target.closest('[data-close]')) closeModal(); return; }
     const m = b.dataset.m; closeModal();
-    if (m === 'rules') { openModal(UI.rulesHtml() + '<div class="actions"><button class="btn" data-close="1">Закрыть</button></div>', { kind: 'rules' }).addEventListener('click', (ev) => { if (ev.target.closest('[data-close]')) closeModal(); }); }
+    if (m === 'rules') { openModal(UI.rulesHtml(langOf(st)) + '<div class="actions"><button class="btn" data-close="1">Закрыть</button></div>', { kind: 'rules' }).addEventListener('click', (ev) => { if (ev.target.closest('[data-close]')) closeModal(); }); }
+    if (m === 'lang' && app.mode === 'local') { st.settings.lang = langOf(st) === 'ru' ? 'en' : 'ru'; setPref('lang', st.settings.lang); renameDefaultBots(st.players, st.settings.lang); sync(); persist(); toast(st.settings.lang === 'ru' ? 'Доска полностью по-русски' : 'Доска как в фильме'); }
     if (m === 'fast') { setPref('fast', !getPref('fast', false)); toast(getPref('fast', false) ? 'Боты ходят быстро' : 'Боты ходят спокойно'); }
     if (m === 'surrender' && await confirmDialog(`${UI.pname(st, v)}, точно сдаёшься?`, 'Сдаюсь', true)) dispatch({ type: 'surrender', pid: v });
     if (m === 'leave') await leaveGamePrompt();
@@ -350,9 +377,10 @@ async function leaveGamePrompt() {
 async function leaveGame(finished) {
   clearTimeout(app.botTimer);
   closeModal();
+  clearTimeout(app.saveTimer);
   if (app.mode === 'online') { if (app.online) { app.online.leave(); } renderOnline(); }
   else if (finished || (app.st && app.st.phase === PHASE.OVER)) { await clearGame(); setPref('hasSave', false); }
-  else persist();
+  else persist(true);
   app.st = null; app.mode = null;
   renderMenu();
   showScreen('menu');
@@ -416,6 +444,7 @@ function renderOnline() {
   $('#lobby-cash').value = String(room.settings.startCash);
   $('#lobby-auctions').checked = !!room.settings.auctions;
   $('#lobby-parking').checked = !!room.settings.freeParkingPool;
+  $('#lobby-lang').value = room.settings.lang || 'en';
   $('#btn-start-online').disabled = room.players.length < 2;
   $('#btn-add-bot').disabled = room.players.length >= 6;
   $('#lobby-link').textContent = inviteLink(room.code);
@@ -457,8 +486,8 @@ function bindStatic() {
   });
   $('#btn-online').addEventListener('click', () => { ensureOnline(); showScreen('online'); renderOnline(); });
   $('#btn-rejoin').addEventListener('click', onlineRejoin);
-  $('#btn-rules').addEventListener('click', () => { $('#rules-body').innerHTML = UI.rulesHtml(); showScreen('rules'); });
-  $('#btn-add-player').addEventListener('click', () => { const i = app.setupPlayers.length; app.setupPlayers.push({ name: BOT_NAMES.find((n) => !app.setupPlayers.some((q) => q.name === n)) || `Бот ${i + 1}`, token: TOKENS.find((t) => !app.setupPlayers.some((q) => q.token === t.id)).id, bot: true }); renderSetup(); });
+  $('#btn-rules').addEventListener('click', () => { $('#rules-body').innerHTML = UI.rulesHtml(prefLang()); showScreen('rules'); });
+  $('#btn-add-player').addEventListener('click', () => { const i = app.setupPlayers.length; app.setupPlayers.push({ name: botNames(app.setupSettings.lang).find((n) => !app.setupPlayers.some((q) => q.name === n)) || `Бот ${i + 1}`, token: TOKENS.find((t) => !app.setupPlayers.some((q) => q.token === t.id)).id, bot: true }); renderSetup(); });
   $('#btn-start-local').addEventListener('click', startLocalFromSetup);
   document.querySelectorAll('[data-back]').forEach((b) => b.addEventListener('click', () => onBack()));
   // онлайн
@@ -471,7 +500,9 @@ function bindStatic() {
   $('#btn-invite').addEventListener('click', () => { if (!shareInvite(app.online.code)) { navigator.clipboard && navigator.clipboard.writeText(inviteLink(app.online.code)).then(() => toast('Ссылка скопирована', 'ok')).catch(() => toast('Код: ' + app.online.code)); } });
   $('#btn-copy-code').addEventListener('click', () => { navigator.clipboard && navigator.clipboard.writeText(app.online.code).then(() => toast('Код скопирован', 'ok')).catch(() => {}); });
   $('#btn-leave-room').addEventListener('click', async () => { if (await confirmDialog('Выйти из комнаты?', 'Выйти', true)) { app.online.leave(); renderOnline(); } });
-  for (const id of ['lobby-cash', 'lobby-auctions', 'lobby-parking']) $(`#${id}`).addEventListener('change', () => app.online.settings({ startCash: Number($('#lobby-cash').value), auctions: $('#lobby-auctions').checked, freeParkingPool: $('#lobby-parking').checked }));
+  for (const id of ['lobby-cash', 'lobby-auctions', 'lobby-parking', 'lobby-lang']) $(`#${id}`).addEventListener('change', () => app.online.settings({ startCash: Number($('#lobby-cash').value), auctions: $('#lobby-auctions').checked, freeParkingPool: $('#lobby-parking').checked, lang: $('#lobby-lang').value }));
+  document.querySelectorAll('#lang-seg button').forEach((b) => b.addEventListener('click', () => { setPref('lang', b.dataset.lang); renderMenu(); haptic('selection'); }));
+  $('#set-lang').addEventListener('change', () => { const l = $('#set-lang').value; renameDefaultBots(app.setupPlayers, l); app.setupSettings.lang = l; renderSetup(); });
   // доска: клик по клетке
   $('#board').addEventListener('click', (e) => { const c = e.target.closest('.cell'); if (c && app.st) showSquare(Number(c.dataset.idx)); });
   new ResizeObserver(() => { if (app.st && app.screen === 'game') UI.positionTokens(app.st, app.refs); }).observe($('#board'));
@@ -482,7 +513,7 @@ function bindStatic() {
 async function boot() {
   initTelegram();
   bindStatic();
-  app.refs = UI.buildBoard($('#board'));
+  app.refs = UI.buildBoard($('#board'), prefLang());
   renderMenu();
   showScreen('menu');
   // приглашение в комнату: ?room=CODE или start_param в Telegram

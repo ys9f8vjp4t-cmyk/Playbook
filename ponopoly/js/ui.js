@@ -1,5 +1,5 @@
 // Рендер доски, панелей и модальных окон. Ничего не знает о правилах — только показывает state.
-import { BOARD, GROUPS, TOKENS, PLAYER_COLORS, RAIL_RENT, MAX_HOUSES, JAIL_FINE, CARD_BY_ID, groupOf } from './data.js';
+import { BOARD, GROUPS, TOKENS, PLAYER_COLORS, RAIL_RENT, MAX_HOUSES, JAIL_FINE, CARD_BY_ID, groupOf, sqName, sqShort, term, cardText, deckName, langOf } from './data.js';
 import { PHASE, whoActs, current, legalActions, netWorth, liquidValue, ownedBy, checks, mortgageValue, unmortgageCost, rentFor, ownsGroup, describeTrade } from './engine.js';
 import { haptic } from './telegram.js';
 
@@ -22,7 +22,9 @@ const RAIL_ICON = { 5: '💍', 15: '🍾', 25: '👟', 35: '💵' };
 const UTIL_ICON = { 12: '💅', 28: '💈' };
 
 // ---------- board ----------
-export function buildBoard(boardEl) {
+export function dnTag(st) { return langOf(st) === 'ru' ? '(в залоге)' : '(DN)'; }
+
+export function buildBoard(boardEl, lang = 'en') {
   boardEl.innerHTML = '';
   const cells = [];
   for (const sq of BOARD) {
@@ -32,7 +34,7 @@ export function buildBoard(boardEl) {
     el.style.gridRow = pos.row; el.style.gridColumn = pos.col;
     el.dataset.idx = sq.i;
     el.setAttribute('role', 'button');
-    el.setAttribute('aria-label', sq.name);
+    el.setAttribute('aria-label', sqName(lang, sq.i));
     const g = groupOf(sq);
     if (g && sq.type === 'prop') el.style.setProperty('--gc', GROUPS[g].color);
     if (sq.type === 'rail') el.style.setProperty('--gc', '#2b2b2b');
@@ -41,13 +43,13 @@ export function buildBoard(boardEl) {
     if (sq.type === 'prop' || sq.type === 'rail' || sq.type === 'util') {
       inner += `<div class="band"></div>`;
       const ico = sq.type === 'rail' ? RAIL_ICON[sq.i] : sq.type === 'util' ? UTIL_ICON[sq.i] : '';
-      inner += `<div class="name">${ico ? `<span class="ico">${ico}</span> ` : ''}${esc(sq.short)}</div>`;
+      inner += `<div class="name">${ico ? `<span class="ico">${ico}</span> ` : ''}${esc(sqShort(lang, sq.i))}</div>`;
     } else if (pos.side === 'corner') {
       const ico = ICONS[sq.type] || '';
-      inner += `<div class="name"><span class="ico">${ico}</span>${esc(sq.short)}</div>`;
+      inner += `<div class="name"><span class="ico">${ico}</span>${esc(sqShort(lang, sq.i))}</div>`;
     } else {
       const ico = sq.type === 'chance' ? '?' : sq.type === 'chest' ? ICONS.chest : sq.i === 38 ? '🔫' : ICONS.tax;
-      inner += `<div class="band" style="background:transparent;border:0"></div><div class="name"><span class="ico">${ico}</span>${esc(sq.short)}</div>`;
+      inner += `<div class="band" style="background:transparent;border:0"></div><div class="name"><span class="ico">${ico}</span>${esc(sqShort(lang, sq.i))}</div>`;
     }
     el.innerHTML = inner;
     boardEl.appendChild(el);
@@ -56,9 +58,9 @@ export function buildBoard(boardEl) {
   const center = document.createElement('div');
   center.className = 'center';
   center.innerHTML = `
-    <div class="deck chance">NO<br>CHANCE</div>
-    <div class="deck chest">COMMUNITY<br>SERVICE</div>
-    <div class="big-logo">PO'NOPOLY<small>by Darker Brothers</small></div>
+    <div class="deck chance">${esc(term(lang, 'chance')).replace(/ /g, '<br>')}</div>
+    <div class="deck chest">${esc(term(lang, 'chest')).replace(/ /g, '<br>')}</div>
+    <div class="big-logo">${esc(term(lang, 'logo'))}<small>${esc(term(lang, 'logoSub'))}</small></div>
     ${mascotSvg()}
     <div class="dice" id="dice"><div class="die" data-v="0">${'<span></span>'.repeat(9)}</div><div class="die" data-v="0">${'<span></span>'.repeat(9)}</div></div>
     <div class="status" id="board-status">Бросай кубики</div>`;
@@ -66,7 +68,7 @@ export function buildBoard(boardEl) {
   const tokens = document.createElement('div');
   tokens.className = 'tokens'; tokens.id = 'tokens';
   boardEl.appendChild(tokens);
-  return { boardEl, cells, center, tokens, dice: center.querySelectorAll('.die'), status: $('#board-status', center) };
+  return { boardEl, cells, center, tokens, dice: center.querySelectorAll('.die'), status: $('#board-status', center), lang };
 }
 
 function gridPos(i) {
@@ -102,7 +104,7 @@ export function renderBoard(st, refs) {
     if (!ps) continue;
     el.classList.toggle('mortgaged', !!ps.mortgaged);
     el.classList.toggle('owned', !!ps.owner);
-    if (ps.owner) { el.style.setProperty('--oc', playerColor(st, ps.owner)); el.title = `${sq.name} — ${pname(st, ps.owner)}`; } else { el.style.removeProperty('--oc'); el.title = sq.name; }
+    if (ps.owner) { el.style.setProperty('--oc', playerColor(st, ps.owner)); el.title = `${sqName(st, sq.i)} — ${pname(st, ps.owner)}`; } else { el.style.removeProperty('--oc'); el.title = sqName(st, sq.i); }
     const band = el.querySelector('.band');
     if (band && sq.type === 'prop') {
       band.innerHTML = ps.houses === MAX_HOUSES ? '<i class="house hotel"></i>' : '<i class="house"></i>'.repeat(ps.houses);
@@ -204,7 +206,7 @@ export function renderStrip(st, el, ctx, prevCash = {}) {
     chip.className = `pchip${p.id === cur.id && st.phase !== PHASE.OVER ? ' cur' : ''}${p.bankrupt ? ' out' : ''}${ctx.me() === p.id ? ' me' : ''}`;
     chip.style.setProperty('--pc', playerColor(st, p.id));
     const delta = prevCash[p.id] != null ? p.cash - prevCash[p.id] : 0;
-    chip.innerHTML = `<span class="tok">${tokenOf(p.token).emoji}</span><span><span class="pname">${esc(p.name)}</span>${p.bot ? ' <span class="pbot">🤖</span>' : ''}${p.inJail ? ' <span class="pjail" title="В County Hospital">🏥</span>' : ''}<br><span class="pcash${delta > 0 ? ' flash-up' : delta < 0 ? ' flash-down' : ''}">${p.bankrupt ? 'банкрот' : money(p.cash)}</span></span>`;
+    chip.innerHTML = `<span class="tok">${tokenOf(p.token).emoji}</span><span><span class="pname">${esc(p.name)}</span>${p.bot ? ' <span class="pbot">🤖</span>' : ''}${p.inJail ? ` <span class="pjail" title="${esc(term(st, 'hospital'))}">🏥</span>` : ''}<br><span class="pcash${delta > 0 ? ' flash-up' : delta < 0 ? ' flash-down' : ''}">${p.bankrupt ? 'банкрот' : money(p.cash)}</span></span>`;
     chip.addEventListener('click', () => ctx.openPlayer(p.id));
     el.appendChild(chip);
   }
@@ -238,7 +240,7 @@ export function renderDock(st, el, ctx, busy = false) {
     switch (st.phase) {
       case PHASE.ROLL:
         if (p.inJail) {
-          status = `<span>${you}${cap(`ты в County Hospital (попытка ${p.jailTurns + 1}/3)`)}</span>`;
+          status = `<span>${you}${cap(`ты ${term(st, 'hospitalIn')} (попытка ${p.jailTurns + 1}/3)`)}</span>`;
           main = btn('🎲 Бросить', 'btn-primary', 'roll', { pulse: true }) + (legal.includes('jail_pay') ? btn(`Заплатить ${money(JAIL_FINE)}`, '', 'jail_pay') : '') + (legal.includes('jail_card') ? btn('Карта выписки', 'btn-gold', 'jail_card') : '');
         } else {
           status = `<span>${you}${cap(st.doubles > 0 ? 'дубль — бросай ещё' : 'твой ход')}</span>`;
@@ -247,17 +249,17 @@ export function renderDock(st, el, ctx, busy = false) {
         break;
       case PHASE.BUY: {
         const sq = BOARD[p.pos];
-        status = `<span>${you}${esc(sq.name)} свободна</span>`;
+        status = `<span>${you}${esc(sqName(st, p.pos))} свободна</span>`;
         main = btn(`Купить за ${money(sq.price)}`, 'btn-gold', 'buy', { disabled: !legal.includes('buy') }) + btn(st.settings.auctions ? 'На аукцион' : 'Не покупать', '', 'skip_buy');
         break;
       }
-      case PHASE.TAX: status = `<span>${you}Tax Evasion</span>`; main = btn('Выбрать, сколько платить', 'btn-primary', 'tax_modal'); break;
+      case PHASE.TAX: status = `<span>${you}${esc(term(st, 'tax'))}</span>`; main = btn('Выбрать, сколько платить', 'btn-primary', 'tax_modal'); break;
       case PHASE.CARD: status = `<span>${you}${cap('карта')}</span>`; main = btn('Показать карту', 'btn-primary', 'card_modal'); break;
       case PHASE.DEBT:
         status = `<span>${you}<span class="debt">${cap('долг')} ${money(st.debt.amount)}</span>, в кармане ${money(p.cash)}</span>`;
         main = btn('Добыть деньги', 'btn-primary', 'manage', { pulse: true }) + btn('Банкрот', 'btn-danger', 'bankrupt', { disabled: liquidValue(st, p.id) >= st.debt.amount });
         break;
-      case PHASE.AUCTION: status = `<span>${you}${cap('аукцион')} за ${esc(BOARD[st.auction.idx].name)}</span>`; main = btn('К торгам', 'btn-primary', 'auction_modal', { pulse: true }); break;
+      case PHASE.AUCTION: status = `<span>${you}${cap('аукцион')} за ${esc(sqName(st, st.auction.idx))}</span>`; main = btn('К торгам', 'btn-primary', 'auction_modal', { pulse: true }); break;
       case PHASE.END:
         if (st.trade) { status = `<span>Сделка ждёт ответа</span>`; main = btn('Показать сделку', 'btn-primary', 'trade_modal'); }
         else { status = `<span>${you}${cap(st.doubles > 0 && !p.inJail ? 'дубль! после хода бросаешь снова' : 'ход завершён?')}</span>`; main = btn(st.doubles > 0 && !p.inJail ? '🎲 Ещё бросок' : 'Завершить ход', 'btn-primary', 'end_turn'); }
@@ -357,23 +359,23 @@ export function squareHtml(st, idx, viewer) {
   } else {
     const texts = {
       go: 'Каждый раз, проходя СТАРТ, получаешь $200. Пособие пришло.',
-      chance: 'Тянешь карту «No Chance». Шансов нет, но карту вытянуть придётся.',
-      chest: 'Тянешь карту «Community Service». Общественные работы — дело общественное.',
+      chance: `Тянешь карту «${term(st, 'chanceShort')}». Шансов нет, но карту вытянуть придётся.`,
+      chest: `Тянешь карту «${term(st, 'chestShort')}». Общественные работы — дело общественное.`,
       tax: sq.i === 4 ? 'Уклонение от налогов раскрыто: плати $200 или 10% от всего, что нажито.' : 'Ограбили. Отдай $100 и не делай резких движений.',
-      jail: 'County Hospital. Проездом — просто навещаешь кореша. Если попал сюда по Drive-By — лежишь, пока не выбросишь дубль, не заплатишь $50 или не используешь карту выписки.',
+      jail: `${term(st, 'hospital')}. Проездом — просто навещаешь кореша. Если попал сюда с клетки «${term(st, 'driveby')}» — лежишь, пока не выбросишь дубль, не заплатишь $50 или не используешь карту выписки.`,
       parking: st.settings.freeParkingPool ? 'Бесплатная парковка. Все штрафы и налоги копятся здесь — кто встал, тот и забрал.' : 'Бесплатная парковка. Можно выдохнуть.',
-      gotojail: 'Drive-By. Поймал шальную — прямиком в County Hospital, СТАРТ не проходишь.',
+      gotojail: `${term(st, 'driveby')}. Поймал шальную — прямиком ${term(st, 'hospitalIn')}, СТАРТ не проходишь.`,
     };
     body = `<div style="padding:12px;font-size:15px">${esc(texts[sq.type] || '')}</div>`;
   }
-  const ownerLine = ps ? (ps.owner ? `Хозяин: <b style="color:${playerColor(st, ps.owner)}">${esc(pname(st, ps.owner))}</b>${ps.mortgaged ? ' · <span class="dn">под Disconnect Notice</span>' : ''}` : `Свободна · цена ${money(sq.price)}`) : '';
+  const ownerLine = ps ? (ps.owner ? `Хозяин: <b style="color:${playerColor(st, ps.owner)}">${esc(pname(st, ps.owner))}</b>${ps.mortgaged ? ` · <span class="dn">${esc(term(st, 'dnUnder'))}</span>` : ''}` : `Свободна · цена ${money(sq.price)}`) : '';
   let ctl = '';
   if (ps && viewer && ps.owner === viewer) {
     const b = (label, act, err) => `<button class="btn btn-sm" data-pact="${act}" data-idx="${idx}" ${err ? `disabled title="${esc(err)}"` : ''}>${label}</button>`;
     if (sq.type === 'prop') ctl += b(`Строить (${money(sq.house)})`, 'build', checks.canBuild(st, viewer, idx)) + b(`Продать постройку (+${money(Math.floor(sq.house / 2))})`, 'sell_house', checks.canSellHouse(st, viewer, idx));
     ctl += ps.mortgaged ? b(`Выкупить (${money(unmortgageCost(idx))})`, 'unmortgage', checks.canUnmortgage(st, viewer, idx)) : b(`Заложить (+${money(mortgageValue(idx))})`, 'mortgage', checks.canMortgage(st, viewer, idx));
   }
-  return `<div class="deed ${ps && ps.mortgaged ? 'dn' : ''}" style="--gc:${gc};--gt:${gt}"><div class="deed-head">${esc(sq.name)}</div>${body}</div>
+  return `<div class="deed ${ps && ps.mortgaged ? 'dn' : ''}" data-stamp="${esc(term(st, 'dnStamp'))}" style="--gc:${gc};--gt:${gt}"><div class="deed-head">${esc(sqName(st, idx))}</div>${body}</div>
     <div class="sub">${ownerLine}</div>${ctl ? `<div class="actions">${ctl}</div>` : ''}`;
 }
 
@@ -382,14 +384,14 @@ export function cardHtml(st, forHuman) {
   if (!card) return '';
   const deck = st.card.deck;
   const p = current(st);
-  return `<div class="big-card ${deck}"><div class="kind">${deck === 'chance' ? 'NO CHANCE' : 'COMMUNITY SERVICE'}<small>${esc(p.name)} тянет карту</small></div><div class="text">${esc(card.text)}</div></div>
+  return `<div class="big-card ${deck}"><div class="kind">${esc(deckName(st, deck))}<small>${esc(p.name)} тянет карту</small></div><div class="text">${esc(cardText(st, card))}</div></div>
     ${forHuman ? '<div class="actions"><button class="btn btn-primary" data-act="ack_card">Ок</button></div>' : '<div class="sub">…</div>'}`;
 }
 export function taxHtml(st) {
   const p = current(st);
   const sq = BOARD[p.pos];
   const pct = Math.floor(netWorth(st, p.id) * sq.percent / 100);
-  return `<h2>Tax Evasion</h2><div class="sub">Налоговая всё-таки нашла ${esc(p.name)}. Общая стоимость имущества: ${money(netWorth(st, p.id))}.</div>
+  return `<h2>${esc(term(st, 'tax'))}</h2><div class="sub">Налоговая всё-таки нашла ${esc(p.name)}. Общая стоимость имущества: ${money(netWorth(st, p.id))}.</div>
     <div class="actions"><button class="btn btn-primary" data-act="tax" data-mode="flat">Заплатить ${money(sq.amount)}</button><button class="btn ${pct < sq.amount ? 'btn-gold' : ''}" data-act="tax" data-mode="percent">Заплатить ${sq.percent}% = ${money(pct)}</button></div>`;
 }
 
@@ -402,7 +404,7 @@ export function auctionHtml(st, ctx) {
   const list = a.active.map((pid) => `<div class="${ctx.isHuman(pid) ? 'you' : ''}">${esc(pname(st, pid))}: ${a.passed.includes(pid) ? 'пас' : a.bids[pid] ? money(a.bids[pid]) : '—'}</div>`).join('');
   const min = a.highest ? a.highest.amount + 1 : 1;
   const steps = [10, 50, 100].map((s) => { const v = (a.highest ? a.highest.amount : 0) + s; return `<button class="btn" data-act="bid" data-amount="${v}" ${v > turn.cash ? 'disabled' : ''}>+${s} → ${money(v)}</button>`; }).join('');
-  return `<h2>Аукцион: ${esc(sq.name)}</h2><div class="sub">Цена по прайсу ${money(sq.price)} · лучшая ставка: <b>${hi}</b></div>
+  return `<h2>Аукцион: ${esc(sqName(st, a.idx))}</h2><div class="sub">Цена по прайсу ${money(sq.price)} · лучшая ставка: <b>${hi}</b></div>
     ${squareHtml(st, a.idx, null).split('<div class="sub">')[0]}
     <div class="auction-bids">${list}</div>
     ${mine ? `<div class="sub">Твой ход, ${esc(turn.name)} (в кармане ${money(turn.cash)}). Минимум ${money(min)}.</div><div class="actions">${steps}<button class="btn" data-act="bid_custom">Своя сумма</button><button class="btn btn-danger" data-act="pass">Пас</button></div>` : `<div class="sub">Ход: ${esc(turn ? turn.name : '')}…</div>`}`;
@@ -411,7 +413,7 @@ export function auctionHtml(st, ctx) {
 export function incomingTradeHtml(st, ctx) {
   const t = st.trade;
   const to = st.players.find((p) => p.id === t.to);
-  const side = (part, who) => `<div class="trade-col"><h3>${esc(pname(st, who))} отдаёт</h3>${part.cash ? `<div>💵 ${money(part.cash)}</div>` : ''}${part.props.map((i) => `<div class="row"><span class="sw" style="--gc:${colorOf(i)};width:10px;height:20px;border-radius:2px;background:var(--gc)"></span>${esc(BOARD[i].name)}${st.props[i].mortgaged ? ' <span class="dn">(DN)</span>' : ''}</div>`).join('')}${part.cards ? `<div>🏥 карты выписки ×${part.cards}</div>` : ''}${!part.cash && !part.props.length && !part.cards ? '<div class="sub">ничего</div>' : ''}</div>`;
+  const side = (part, who) => `<div class="trade-col"><h3>${esc(pname(st, who))} отдаёт</h3>${part.cash ? `<div>💵 ${money(part.cash)}</div>` : ''}${part.props.map((i) => `<div class="row"><span class="sw" style="--gc:${colorOf(i)};width:10px;height:20px;border-radius:2px;background:var(--gc)"></span>${esc(sqName(st, i))}${st.props[i].mortgaged ? ` <span class="dn">${dnTag(st)}</span>` : ''}</div>`).join('')}${part.cards ? `<div>🏥 карты выписки ×${part.cards}</div>` : ''}${!part.cash && !part.props.length && !part.cards ? '<div class="sub">ничего</div>' : ''}</div>`;
   const canAnswer = ctx.isHuman(t.to);
   const canCancel = ctx.isHuman(t.from);
   return `<h2>Сделка от ${esc(pname(st, t.from))}</h2><div class="sub">Предложение игроку <b>${esc(to.name)}</b></div><div class="trade-cols">${side(t.give, t.from)}${side(t.get, t.to)}</div>
@@ -429,7 +431,7 @@ export function propItemHtml(st, idx, viewer, withCtl) {
     if (sq.type === 'prop') ctl += b('+🏠', 'build', checks.canBuild(st, viewer, idx)) + b('−🏠', 'sell_house', checks.canSellHouse(st, viewer, idx));
     ctl += ps.mortgaged ? b(`Выкупить ${money(unmortgageCost(idx))}`, 'unmortgage', checks.canUnmortgage(st, viewer, idx)) : b(`Заложить +${money(mortgageValue(idx))}`, 'mortgage', checks.canMortgage(st, viewer, idx));
   }
-  return `<div class="item ${ps.mortgaged ? 'off' : ''}" data-open="${idx}"><span class="sw" style="--gc:${colorOf(idx)}"></span><div class="t">${esc(sq.name)}${houses}<small>${ps.mortgaged ? '<span class="dn">Disconnect Notice</span> · ' : ''}${sq.type === 'prop' ? `аренда ${money(rentFor(st, idx, 7) || sq.rent[0])}` : sq.type === 'rail' ? `аренда ${money(rentFor(st, idx, 7) || 25)}` : 'салон'}</small></div><div class="ctl">${ctl}</div></div>`;
+  return `<div class="item ${ps.mortgaged ? 'off' : ''}" data-open="${idx}"><span class="sw" style="--gc:${colorOf(idx)}"></span><div class="t">${esc(sqName(st, idx))}${houses}<small>${ps.mortgaged ? `<span class="dn">${esc(term(st, 'dn'))}</span> · ` : ''}${sq.type === 'prop' ? `аренда ${money(rentFor(st, idx, 7) || sq.rent[0])}` : sq.type === 'rail' ? `аренда ${money(rentFor(st, idx, 7) || 25)}` : 'салон'}</small></div><div class="ctl">${ctl}</div></div>`;
 }
 
 export function manageHtml(st, pid, debt) {
@@ -444,7 +446,7 @@ export function playerHtml(st, pid, viewerPid) {
   const p = st.players.find((x) => x.id === pid);
   const owned = ownedBy(st, pid).sort((a, b) => a - b);
   return `<h2><span class="tok" style="display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #fbe28f, var(--gold) 70%);border:2px solid ${playerColor(st, pid)};font-size:18px">${tokenOf(p.token).emoji}</span> ${esc(p.name)} ${p.bot ? '🤖' : ''}</h2>
-    <div class="sub">${p.bankrupt ? 'Банкрот' : `Наличные ${money(p.cash)} · имущество ${money(netWorth(st, pid))}`}${p.inJail ? ' · в County Hospital' : ''}${p.jailCards.length ? ` · карты выписки ×${p.jailCards.length}` : ''} · клетка: ${esc(BOARD[p.pos].name)}</div>
+    <div class="sub">${p.bankrupt ? 'Банкрот' : `Наличные ${money(p.cash)} · имущество ${money(netWorth(st, pid))}`}${p.inJail ? ` · ${term(st, 'hospitalIn')}` : ''}${p.jailCards.length ? ` · карты выписки ×${p.jailCards.length}` : ''} · клетка: ${esc(sqName(st, p.pos))}</div>
     <div class="list">${owned.length ? owned.map((i) => propItemHtml(st, i, viewerPid, viewerPid === pid)).join('') : '<div class="sub">Нет имущества</div>'}</div>
     <div class="actions"><button class="btn" data-close="1">Закрыть</button></div>`;
 }
@@ -458,7 +460,7 @@ export function tradeBuilderHtml(st, me) {
   const mine = ownedBy(st, me);
   const meP = st.players.find((p) => p.id === me);
   const to = others[0];
-  const propChecks = (list, name) => list.map((i) => `<label class="check"><input type="checkbox" name="${name}" value="${i}"><span class="sw" style="--gc:${colorOf(i)}"></span>${esc(BOARD[i].name)}${st.props[i].mortgaged ? ' (DN)' : ''}</label>`).join('') || '<div class="sub">нет клеток</div>';
+  const propChecks = (list, name) => list.map((i) => `<label class="check"><input type="checkbox" name="${name}" value="${i}"><span class="sw" style="--gc:${colorOf(i)}"></span>${esc(sqName(st, i))}${st.props[i].mortgaged ? ` ${dnTag(st)}` : ''}</label>`).join('') || '<div class="sub">нет клеток</div>';
   return `<h2>Сделка</h2>
     <div class="field"><label>С кем</label><select class="input" id="trade-to">${others.map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select></div>
     <div class="trade-cols">
@@ -476,14 +478,16 @@ export function gameOverHtml(st) {
     <div class="actions"><button class="btn" data-close="1">Посмотреть доску</button><button class="btn btn-primary" data-act="to_menu">В меню</button></div>`;
 }
 
-export function rulesHtml() {
+export function rulesHtml(lang = 'en') {
+  const n = (i) => esc(sqName(lang, i));
+  const t = (k) => esc(term(lang, k));
   return `<div class="rules">
-    <p>Po'Nopoly — пародийная «Монополия» из фильма «Не грози Южному Централу, попивая сок у себя в квартале» (1996). Правила классические, названия — с той самой доски.</p>
+    <p>Po'Nopoly — пародийная «Монополия» из фильма «Не грози Южному Централу, попивая сок у себя в квартале» (1996). Правила классические, названия — с той самой доски${lang === 'ru' ? ', переведённые на русский' : ''}.</p>
     <h3>Цель</h3><p>Остаться последним, кто не обанкротился.</p>
-    <h3>Ход</h3><ul><li>Бросаешь два кубика и идёшь по часовой стрелке. Дубль — ходишь ещё раз; три дубля подряд — в County Hospital.</li><li>Проходя СТАРТ, получаешь $200.</li><li>Встал на свободную клетку — можешь купить. Отказался — клетка уходит на аукцион.</li><li>Встал на чужую — платишь аренду. Полная цветовая группа без построек удваивает аренду.</li></ul>
-    <h3>Клетки с доски</h3><ul><li><b>No Chance</b> и <b>Community Service</b> — колоды карточек.</li><li><b>Tax Evasion</b> — $200 или 10% от всего имущества, на выбор.</li><li><b>Robbed</b> — минус $100.</li><li><b>Drive-By</b> — прямиком в County Hospital. Выйти: дубль, $50 или карта выписки. С третьей попытки платишь $50 и выходишь.</li><li><b>Pawn Shop, Liquor Store, Swap Meet, Check Cashing</b> — «точки», аренда растёт с их количеством: $25 / $50 / $100 / $200.</li><li><b>Nail Salon, Barbershop</b> — аренда = кубики × 4 (× 10, если оба у одного хозяина).</li></ul>
+    <h3>Ход</h3><ul><li>Бросаешь два кубика и идёшь по часовой стрелке. Дубль — ходишь ещё раз; три дубля подряд — ${t('hospitalIn')}.</li><li>Проходя СТАРТ, получаешь $200.</li><li>Встал на свободную клетку — можешь купить. Отказался — клетка уходит на аукцион.</li><li>Встал на чужую — платишь аренду. Полная цветовая группа без построек удваивает аренду.</li></ul>
+    <h3>Клетки с доски</h3><ul><li><b>${t('chanceShort')}</b> и <b>${t('chestShort')}</b> — колоды карточек.</li><li><b>${t('tax')}</b> — $200 или 10% от всего имущества, на выбор.</li><li><b>${t('robbed')}</b> — минус $100.</li><li><b>${t('driveby')}</b> — прямиком ${t('hospitalIn')}. Выйти: дубль, $50 или карта выписки. С третьей попытки платишь $50 и выходишь.</li><li><b>${n(5)}, ${n(15)}, ${n(25)}, ${n(35)}</b> — «точки», аренда растёт с их количеством: $25 / $50 / $100 / $200.</li><li><b>${n(12)}, ${n(28)}</b> — аренда = кубики × 4 (× 10, если оба у одного хозяина).</li></ul>
     <h3>Постройки</h3><ul><li>Собрал всю цветовую группу — строишь хаты (до четырёх), пятая постройка — особняк. Строить нужно равномерно по группе.</li><li>Постройки продаются банку за полцены.</li></ul>
-    <h3>Disconnect Notice (залог)</h3><ul><li>Клетку без построек можно заложить за половину цены — аренда с неё не берётся. Выкуп: залог + 10%.</li></ul>
+    <h3>${t('dn')} (залог)</h3><ul><li>Клетку без построек можно заложить за половину цены — аренда с неё не берётся. Выкуп: залог + 10%.</li></ul>
     <h3>Долги и банкротство</h3><ul><li>Не хватает денег — закладывай и продавай. Если выручить нужную сумму не получается, объявляешь банкротство: имущество уходит кредитору.</li></ul>
     <h3>Сделки</h3><ul><li>В свой ход можно предложить любому игроку обмен: деньги, клетки, карты выписки. Клетки с постройками не обмениваются.</li></ul>
   </div>`;

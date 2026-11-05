@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { RU } from '../js/ru.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = 18090 + Math.floor(Math.random() * 100);
@@ -51,8 +52,13 @@ test('сервер: комната, подключение, старт, ходы
     a.send({ t: 'add_bot' });
     room = await a.next((m) => m.t === 'room' && m.room.players.length === 3);
     assert.equal(room.room.players[2].bot, true);
-    a.send({ t: 'settings', settings: { startCash: 2000, auctions: false } });
+    a.send({ t: 'settings', settings: { startCash: 2000, auctions: false, lang: 'ru' } });
     room = await a.next((m) => m.t === 'room' && m.room.settings.startCash === 2000);
+    assert.equal(room.room.settings.lang, 'ru');
+    assert.equal(room.room.players[2].name, RU.bots[0]); // бот переименован на русский
+    a.send({ t: 'settings', settings: { lang: 'xx' } });
+    room = await a.next((m) => m.t === 'room' && m.room.players.length === 3);
+    assert.equal(room.room.settings.lang, 'ru'); // неизвестный язык игнорируется
     a.send({ t: 'start' });
     const st = await b.next((m) => m.t === 'state');
     assert.equal(st.state.players.length, 3);

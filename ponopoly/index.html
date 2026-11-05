@@ -14,7 +14,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%231a2a35'/%3E%3Ctext x='32' y='44' font-family='Impact,Arial Narrow,sans-serif' font-size='34' fill='%23d9a521' text-anchor='middle'%3EPO'%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500&family=Rubik:wght@400;500;600&family=UnifrakturCook:wght@700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;700&family=Rubik:wght@400;500;600&family=Ruslan+Display&family=UnifrakturCook:wght@700&display=swap">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
   <script src="config.js"></script>
@@ -25,9 +25,10 @@
 <section class="screen" id="screen-menu">
   <div class="wrap">
     <div class="logo-block">
-      <div class="logo-band">PO'NOPOLY<small>by Darker Brothers</small></div>
+      <div class="logo-band" id="menu-logo">PO'NOPOLY<small>by Darker Brothers</small></div>
       <p class="tagline">Настолка из фильма «Не грози Южному Централу, попивая сок у себя в квартале».</p>
       <div class="fine" id="menu-user"></div>
+      <div class="lang-row"><span class="fine">Названия на доске</span><div class="seg" id="lang-seg"><button data-lang="en">Как в фильме</button><button data-lang="ru">Полностью по-русски</button></div></div>
     </div>
     <div class="menu-list">
       <button class="btn btn-gold" id="btn-continue" hidden>▶ Продолжить партию</button>
@@ -36,7 +37,8 @@
       <button class="btn" id="btn-online">🌐 Онлайн с друзьями</button>
       <button class="btn" id="btn-rules">📖 Правила</button>
     </div>
-    <p class="fine">Watts, Crenshaw, Roscoe's, Tax Evasion, Drive-By, No Chance, Community Service, Disconnect Notice — всё как на той самой доске. Нужна вся цветовая группа, чтобы строить хаты и особняки.</p>
+    <p class="fine" id="menu-fine-en">Watts, Crenshaw, Roscoe's, Tax Evasion, Drive-By, No Chance, Community Service, Disconnect Notice — всё как на той самой доске. Нужна вся цветовая группа, чтобы строить хаты и особняки.</p>
+    <p class="fine" id="menu-fine-ru" hidden>Уоттс, Креншоу, курица у Роско, уклонение от налогов, драйв-бай, колоды «Без шансов» и «Общественные работы» — та самая доска, но целиком по-русски. Нужна вся цветовая группа, чтобы строить хаты и особняки.</p>
   </div>
 </section>
 
@@ -54,8 +56,10 @@
       <h3>Правила</h3>
       <div class="field"><label for="set-cash">Стартовый капитал</label>
         <select class="input" id="set-cash"><option value="1000">$1 000</option><option value="1500" selected>$1 500 (классика)</option><option value="2000">$2 000</option><option value="2500">$2 500</option></select></div>
+      <div class="field"><label for="set-lang">Названия на доске</label>
+        <select class="input" id="set-lang"><option value="en">Как в фильме (Watts, No Chance, County Hospital…)</option><option value="ru">Полностью по-русски (Уоттс, Без шансов, Окружная больница…)</option></select></div>
       <label class="check"><input type="checkbox" id="set-auctions" checked> Аукцион, если игрок не купил клетку</label>
-      <label class="check"><input type="checkbox" id="set-parking"> Штрафы и налоги копятся на Free Parking</label>
+      <label class="check"><input type="checkbox" id="set-parking"> Штрафы и налоги копятся на бесплатной парковке</label>
     </div>
     <button class="btn btn-primary btn-block" id="btn-start-local" style="min-height:54px;font-size:17px">Начать</button>
   </div>
@@ -91,8 +95,10 @@
         <div class="btn-row"><button class="btn" id="btn-add-bot">+ Бот</button></div>
         <div class="field" style="margin-top:10px"><label for="lobby-cash">Стартовый капитал</label>
           <select class="input" id="lobby-cash"><option value="1000">$1 000</option><option value="1500">$1 500 (классика)</option><option value="2000">$2 000</option><option value="2500">$2 500</option></select></div>
+        <div class="field"><label for="lobby-lang">Названия на доске</label>
+          <select class="input" id="lobby-lang"><option value="en">Как в фильме</option><option value="ru">Полностью по-русски</option></select></div>
         <label class="check"><input type="checkbox" id="lobby-auctions"> Аукцион, если игрок не купил клетку</label>
-        <label class="check"><input type="checkbox" id="lobby-parking"> Штрафы копятся на Free Parking</label>
+        <label class="check"><input type="checkbox" id="lobby-parking"> Штрафы копятся на бесплатной парковке</label>
         <button class="btn btn-primary btn-block" id="btn-start-online" style="margin-top:10px;min-height:54px">Начать игру</button>
       </div>
       <p class="fine" id="lobby-wait" hidden>Ждём, когда хост начнёт игру…</p>

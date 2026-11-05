@@ -4,7 +4,7 @@
 
 import {
   BOARD, CHANCE, CHEST, CARD_BY_ID, GO_SALARY, JAIL_FINE, JAIL_POS, RAIL_RENT, MAX_HOUSES,
-  DEFAULT_SETTINGS, isOwnable, groupOf, groupMembers,
+  DEFAULT_SETTINGS, isOwnable, groupOf, groupMembers, sqName, sqRef, term, cardText, deckName,
 } from './data.js';
 
 export class EngineError extends Error {}
@@ -252,7 +252,7 @@ function sendToJail(st, p, ev, why) {
   st.doubles = 0;
   ev.push({ type: 'move', pid: p.id, from, to: JAIL_POS, mode: 'jail' });
   ev.push({ type: 'jail', pid: p.id });
-  log(st, `${p.name}: ${why}. Прямиком в County Hospital.`, p.id);
+  log(st, `${p.name}: ${why}. Прямиком ${term(st, 'hospitalIn')}.`, p.id);
   st.phase = PHASE.END;
 }
 
@@ -266,26 +266,26 @@ function land(st, p, ev, opts = {}) {
       const ps = st.props[sq.i];
       if (ps.owner == null) {
         st.phase = PHASE.BUY;
-        log(st, `${p.name} попадает на ${sq.name}. Клетка свободна — цена $${sq.price}.`, p.id);
+        log(st, `${p.name} попадает на ${sqRef(st, sq.i)}. Клетка свободна — цена $${sq.price}.`, p.id);
         return;
       }
-      if (ps.owner === p.id) { st.phase = PHASE.END; log(st, `${p.name} попадает на свою клетку ${sq.name}.`, p.id); return; }
-      if (ps.mortgaged) { st.phase = PHASE.END; log(st, `${sq.name} под Disconnect Notice — аренда не берётся.`, p.id); return; }
+      if (ps.owner === p.id) { st.phase = PHASE.END; log(st, `${p.name} попадает на свою клетку ${sqRef(st, sq.i)}.`, p.id); return; }
+      if (ps.mortgaged) { st.phase = PHASE.END; log(st, `${sqRef(st, sq.i)} ${term(st, 'dnUnder')} — аренда не берётся.`, p.id); return; }
       const owner = player(st, ps.owner);
       const rent = rentFor(st, sq.i, diceTotal, opts);
-      log(st, `${p.name} попадает на ${sq.name} (хозяин ${owner.name}). Аренда $${rent}.`, p.id);
+      log(st, `${p.name} попадает на ${sqRef(st, sq.i)} (хозяин ${owner.name}). Аренда $${rent}.`, p.id);
       ev.push({ type: 'rent', from: p.id, to: owner.id, amount: rent, idx: sq.i });
       st.phase = PHASE.END;
-      charge(st, p.id, rent, owner.id, ev, `аренда за ${sq.name}`);
+      charge(st, p.id, rent, owner.id, ev, `аренда за ${sqRef(st, sq.i)}`);
       return;
     }
     case 'tax': {
       if (sq.percent) {
         st.phase = PHASE.TAX;
-        log(st, `${p.name} попадает на Tax Evasion: $${sq.amount} или ${sq.percent}% от всего имущества.`, p.id);
+        log(st, `${p.name} попадает на ${term(st, 'tax')}: $${sq.amount} или ${sq.percent}% от всего имущества.`, p.id);
         return;
       }
-      log(st, `${p.name} попадает на Robbed — отбирают $${sq.amount}.`, p.id);
+      log(st, `${p.name} попадает на ${term(st, 'robbed')} — отбирают $${sq.amount}.`, p.id);
       st.phase = PHASE.END;
       charge(st, p.id, sq.amount, null, ev, 'ограбление');
       return;
@@ -298,23 +298,23 @@ function land(st, p, ev, opts = {}) {
       st.card = { deck, id };
       st.phase = PHASE.CARD;
       ev.push({ type: 'card', pid: p.id, deck, id });
-      log(st, `${p.name} тянет карту «${deck === 'chance' ? 'No Chance' : 'Community Service'}»: ${card.text}`, p.id);
+      log(st, `${p.name} тянет карту «${deckName(st, deck)}»: ${cardText(st, card)}`, p.id);
       return;
     }
     case 'gotojail':
-      sendToJail(st, p, ev, 'попал под Drive-By');
+      sendToJail(st, p, ev, term(st, 'drivebyEvent'));
       return;
     case 'parking': {
       st.phase = PHASE.END;
       if (st.settings.freeParkingPool && st.pool > 0) {
         const amt = st.pool; st.pool = 0;
         give(st, p.id, amt, ev, 'parking');
-        log(st, `${p.name} забирает с Free Parking $${amt}.`, p.id);
-      } else log(st, `${p.name} отдыхает на Free Parking.`, p.id);
+        log(st, `${p.name} забирает с клетки «${term(st, 'parking')}» $${amt}.`, p.id);
+      } else log(st, `${p.name} отдыхает на клетке «${term(st, 'parking')}».`, p.id);
       return;
     }
     case 'jail':
-      st.phase = PHASE.END; log(st, `${p.name} навещает кореша в County Hospital.`, p.id); return;
+      st.phase = PHASE.END; log(st, `${p.name} ${term(st, 'visiting')}.`, p.id); return;
     case 'go':
       st.phase = PHASE.END; log(st, `${p.name} на СТАРТе.`, p.id); return;
     default:
@@ -490,7 +490,7 @@ function startAuction(st, idx, ev) {
   }
   st.auction = { idx, active: order, passed: [], highest: null, turnPid: order[0], bids: {} };
   st.phase = PHASE.AUCTION;
-  log(st, `Аукцион за ${BOARD[idx].name}. Первым торгуется ${player(st, order[0]).name}.`);
+  log(st, `Аукцион за ${sqRef(st, idx)}. Первым торгуется ${player(st, order[0]).name}.`);
   ev.push({ type: 'auction_start', idx });
 }
 
@@ -523,9 +523,9 @@ function finishAuction(st, ev) {
     st.props[a.idx].owner = w.id;
     ev.push({ type: 'cash', pid: w.id, delta: -a.highest.amount, reason: 'auction' });
     ev.push({ type: 'buy', pid: w.id, idx: a.idx, price: a.highest.amount, auction: true });
-    log(st, `${w.name} выигрывает аукцион за ${sq.name}: $${a.highest.amount}.`, w.id);
+    log(st, `${w.name} выигрывает аукцион за ${sqRef(st, a.idx)}: $${a.highest.amount}.`, w.id);
   } else {
-    log(st, `Аукцион за ${sq.name} никого не заинтересовал.`);
+    log(st, `Аукцион за ${sqRef(st, a.idx)} никого не заинтересовал.`);
   }
   st.auction = null;
   ev.push({ type: 'auction_end', idx: a.idx, winner: a.highest ? a.highest.pid : null });
@@ -543,9 +543,9 @@ function validateTrade(st, t) {
     if (part.cash < 0 || !Number.isInteger(part.cash)) throw new EngineError('Некорректная сумма');
     if (part.cash > who.cash) throw new EngineError(`${who.name}: не хватает наличных`);
     for (const i of part.props) {
-      if (!st.props[i] || st.props[i].owner !== who.id) throw new EngineError(`${who.name} не владеет ${BOARD[i].name}`);
+      if (!st.props[i] || st.props[i].owner !== who.id) throw new EngineError(`${who.name} не владеет ${sqRef(st, i)}`);
       const g = groupOf(BOARD[i]);
-      if (BOARD[i].type === 'prop' && groupMembers(g).some((j) => st.props[j].houses > 0)) throw new EngineError(`Сначала продайте постройки в группе ${BOARD[i].name}`);
+      if (BOARD[i].type === 'prop' && groupMembers(g).some((j) => st.props[j].houses > 0)) throw new EngineError(`Сначала продайте постройки в группе ${sqRef(st, i)}`);
     }
     if (part.cards > who.jailCards.length) throw new EngineError(`${who.name}: нет столько карт выписки`);
   }
@@ -569,7 +569,7 @@ export function describeTrade(st, t) {
   const side = (part) => {
     const items = [];
     if (part.cash) items.push(`$${part.cash}`);
-    for (const i of part.props) items.push(BOARD[i].name);
+    for (const i of part.props) items.push(sqName(st, i));
     if (part.cards) items.push(`выписка ×${part.cards}`);
     return items.length ? items.join(', ') : 'ничего';
   };
@@ -584,7 +584,7 @@ function canBuild(st, pid, idx) {
   if (ps.owner !== pid) return 'Это не ваша клетка';
   if (!ownsGroup(st, pid, sq.group)) return 'Нужна вся цветовая группа';
   const members = groupMembers(sq.group);
-  if (members.some((j) => st.props[j].mortgaged)) return 'В группе есть клетка под Disconnect Notice';
+  if (members.some((j) => st.props[j].mortgaged)) return `В группе есть клетка ${term(st, 'dnUnder')}`;
   if (ps.houses >= MAX_HOUSES) return 'Уже стоит особняк';
   const minH = Math.min(...members.map((j) => st.props[j].houses));
   if (ps.houses > minH) return 'Стройте равномерно по группе';
@@ -698,7 +698,7 @@ export function applyAction(st, action, rng) {
       if (p.inJail) {
         if (isDouble) {
           p.inJail = false; p.jailTurns = 0; st.doubles = 0;
-          log(st, `${p.name} выбрасывает дубль ${dice[0]}:${dice[1]} и выходит из County Hospital.`, pid);
+          log(st, `${p.name} выбрасывает дубль ${dice[0]}:${dice[1]} и выходит ${term(st, 'hospitalFrom')}.`, pid);
           st.phase = PHASE.END;
           moveForward(st, p, dice[0] + dice[1], ev);
           land(st, p, ev);
@@ -707,13 +707,13 @@ export function applyAction(st, action, rng) {
           if (p.jailTurns >= 3) {
             log(st, `${p.name}: третья попытка (${dice[0]}:${dice[1]}) — платит $${JAIL_FINE} и выходит.`, pid);
             st.phase = PHASE.END;
-            if (charge(st, pid, JAIL_FINE, null, ev, 'выписка из County Hospital', 'jail_move')) {
+            if (charge(st, pid, JAIL_FINE, null, ev, `выписка ${term(st, 'hospitalFrom')}`, 'jail_move')) {
               p.inJail = false; p.jailTurns = 0;
               moveForward(st, p, dice[0] + dice[1], ev);
               land(st, p, ev);
             }
           } else {
-            log(st, `${p.name} выбрасывает ${dice[0]}:${dice[1]} — остаётся в County Hospital.`, pid);
+            log(st, `${p.name} выбрасывает ${dice[0]}:${dice[1]} — остаётся лежать (${term(st, 'hospitalShort')}).`, pid);
             st.phase = PHASE.END;
           }
         }
@@ -734,7 +734,7 @@ export function applyAction(st, action, rng) {
       p.cash -= JAIL_FINE; toBank(st, JAIL_FINE);
       p.inJail = false; p.jailTurns = 0;
       ev.push({ type: 'cash', pid, delta: -JAIL_FINE, reason: 'jail' });
-      log(st, `${p.name} платит $${JAIL_FINE} и выходит из County Hospital.`, pid);
+      log(st, `${p.name} платит $${JAIL_FINE} и выходит ${term(st, 'hospitalFrom')}.`, pid);
       break;
     }
     case 'jail_card': {
@@ -742,7 +742,7 @@ export function applyAction(st, action, rng) {
       st.decks[id.startsWith('c') ? 'chance' : 'chest'].push(id);
       p.inJail = false; p.jailTurns = 0;
       ev.push({ type: 'jailcard_used', pid });
-      log(st, `${p.name} использует карту выписки и выходит из County Hospital.`, pid);
+      log(st, `${p.name} использует карту выписки и выходит ${term(st, 'hospitalFrom')}.`, pid);
       break;
     }
     case 'buy': {
@@ -751,13 +751,13 @@ export function applyAction(st, action, rng) {
       st.props[sq.i].owner = pid;
       ev.push({ type: 'cash', pid, delta: -sq.price, reason: 'buy' });
       ev.push({ type: 'buy', pid, idx: sq.i, price: sq.price });
-      log(st, `${p.name} покупает ${sq.name} за $${sq.price}.`, pid);
+      log(st, `${p.name} покупает ${sqRef(st, sq.i)} за $${sq.price}.`, pid);
       st.phase = PHASE.END;
       break;
     }
     case 'skip_buy': {
       const sq = BOARD[p.pos];
-      log(st, `${p.name} не покупает ${sq.name}.`, pid);
+      log(st, `${p.name} не покупает ${sqRef(st, sq.i)}.`, pid);
       if (st.settings.auctions && activePlayers(st).length > 1) startAuction(st, sq.i, ev);
       else st.phase = PHASE.END;
       break;
@@ -789,7 +789,7 @@ export function applyAction(st, action, rng) {
       const amount = action.mode === 'percent' ? pct : sq.amount;
       log(st, `${p.name} платит налог $${amount} (${action.mode === 'percent' ? sq.percent + '%' : 'фикс'}).`, pid);
       st.phase = PHASE.END;
-      charge(st, pid, amount, null, ev, 'Tax Evasion');
+      charge(st, pid, amount, null, ev, term(st, 'tax'));
       break;
     }
     case 'ack_card': {
@@ -806,7 +806,7 @@ export function applyAction(st, action, rng) {
       p.cash -= sq.house; st.props[idx].houses += 1;
       ev.push({ type: 'cash', pid, delta: -sq.house, reason: 'build' });
       ev.push({ type: 'build', pid, idx, houses: st.props[idx].houses });
-      log(st, `${p.name} строит ${st.props[idx].houses === MAX_HOUSES ? 'особняк' : 'хату'} на ${sq.name} за $${sq.house}.`, pid);
+      log(st, `${p.name} строит ${st.props[idx].houses === MAX_HOUSES ? 'особняк' : 'хату'} на ${sqRef(st, idx)} за $${sq.house}.`, pid);
       break;
     }
     case 'sell_house': {
@@ -818,7 +818,7 @@ export function applyAction(st, action, rng) {
       p.cash += back; st.props[idx].houses -= 1;
       ev.push({ type: 'cash', pid, delta: back, reason: 'sell_house' });
       ev.push({ type: 'sell_house', pid, idx, houses: st.props[idx].houses });
-      log(st, `${p.name} продаёт постройку на ${sq.name} за $${back}.`, pid);
+      log(st, `${p.name} продаёт постройку на ${sqRef(st, idx)} за $${back}.`, pid);
       tryAutoPay(st, ev);
       break;
     }
@@ -830,7 +830,7 @@ export function applyAction(st, action, rng) {
       p.cash += v; st.props[idx].mortgaged = true;
       ev.push({ type: 'cash', pid, delta: v, reason: 'mortgage' });
       ev.push({ type: 'mortgage', pid, idx });
-      log(st, `${p.name} закладывает ${BOARD[idx].name} (Disconnect Notice) за $${v}.`, pid);
+      log(st, `${p.name} закладывает ${sqRef(st, idx)} (${term(st, 'dn')}) за $${v}.`, pid);
       tryAutoPay(st, ev);
       break;
     }
@@ -842,7 +842,7 @@ export function applyAction(st, action, rng) {
       p.cash -= c; st.props[idx].mortgaged = false;
       ev.push({ type: 'cash', pid, delta: -c, reason: 'unmortgage' });
       ev.push({ type: 'unmortgage', pid, idx });
-      log(st, `${p.name} выкупает ${BOARD[idx].name} за $${c}.`, pid);
+      log(st, `${p.name} выкупает ${sqRef(st, idx)} за $${c}.`, pid);
       break;
     }
     case 'pay_debt': {
