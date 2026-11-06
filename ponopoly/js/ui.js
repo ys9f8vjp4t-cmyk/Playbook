@@ -103,8 +103,7 @@ export function buildBoard(boardEl, lang = 'en') {
     <div class="fineprint">${lang === 'ru' ? 'Пародийная настолка по мотивам фильма «Не грози Южному Централу». Любое сходство с настоящими районами — не случайность.' : 'A parody board game inspired by the hood. Any resemblance to real neighborhoods is entirely intentional.'}</div>
     <div class="deck chance"><span>${esc(term(lang, 'chance'))}</span></div>
     <div class="deck chest"><span>${esc(term(lang, 'chest'))}</span></div>
-    <div class="dice" id="dice"><div class="die" data-v="0">${'<span></span>'.repeat(9)}</div><div class="die" data-v="0">${'<span></span>'.repeat(9)}</div></div>
-    <div class="status" id="board-status">Бросай кубики</div>`;
+    <div class="center-bottom"><div class="dice" id="dice"><div class="die" data-v="0">${'<span></span>'.repeat(9)}</div><div class="die" data-v="0">${'<span></span>'.repeat(9)}</div></div><div class="status" id="board-status">Бросай кубики</div></div>`;
   boardEl.appendChild(center);
   const tokens = document.createElement('div');
   tokens.className = 'tokens'; tokens.id = 'tokens';
@@ -175,6 +174,7 @@ export function ensureTokens(st, refs) {
     }
     el.style.setProperty('--pc', playerColor(st, p.id));
     el.classList.toggle('out', !!p.bankrupt);
+    el.classList.toggle('cur', !p.bankrupt && current(st).id === p.id && st.phase !== PHASE.OVER);
     seen.add(p.id);
   }
   for (const el of [...layer.children]) if (!seen.has(el.dataset.pid)) el.remove();

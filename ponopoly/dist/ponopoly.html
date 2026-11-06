@@ -44,7 +44,7 @@
   --font-logo: 'Jost', 'Futura', 'Century Gothic', 'Avenir Next', sans-serif;
   --font-gothic-ru: 'Ruslan Display', 'Times New Roman', serif;
   --radius: 14px;
-  --board-size: min(100vw - 24px, 100vh - 290px, 720px);
+  --board-size: min(100vw - 24px, 100vh - 300px, 720px);
   --unit: calc(var(--board-size) / 14.1);
   color-scheme: light;
 }
@@ -158,7 +158,7 @@ a { color: var(--accent); }
 .pchip.cur { border-color: var(--gold); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 35%, transparent); }
 .pchip.out { opacity: .4; }
 .pchip.me .pname::after { content: ' (ты)'; color: var(--muted); font-weight: 400; }
-.pchip .tok { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; background: radial-gradient(circle at 35% 30%, #fbe28f, var(--gold) 70%); border: 2px solid var(--pc, var(--line)); }
+.pchip .tok { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; background: radial-gradient(circle at 35% 30%, #fff1b0, var(--gold) 70%); border: 3px solid var(--pc, var(--line)); box-shadow: 0 0 0 2px #fff; }
 .pchip .pname { font-weight: 600; font-size: 13px; white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
 .pchip .pcash { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pchip .pcash.flash-up { color: var(--accent); } .pchip .pcash.flash-down { color: var(--danger); }
@@ -166,10 +166,10 @@ a { color: var(--accent); }
 .pchip .pbot { font-size: 11px; color: var(--muted); }
 
 .board-area { grid-area: board; display: flex; align-items: center; justify-content: center; min-height: 0; padding: 4px; overflow: hidden; }
-.feed { grid-area: feed; width: var(--board-size); max-width: 100%; margin: 0 auto; font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; padding: 2px 8px 6px; max-height: 3.9em; overflow: hidden; min-width: 0; }
+.feed { grid-area: feed; width: var(--board-size); max-width: 100%; margin: 0 auto; font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 3px; padding: 4px 8px 6px; max-height: 4.2em; overflow: hidden; min-width: 0; }
 .feed div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.feed div:first-child { color: var(--fg); }
-@media (max-height: 640px) { .feed { display: none; } }
+.feed div:first-child { color: var(--fg); font-weight: 500; }
+@media (max-height: 560px) { .feed { display: none; } }
 .board {
   position: relative; width: var(--board-size); height: var(--board-size); background: var(--board); border: 3px solid var(--board-line); border-radius: 4px;
   display: grid; grid-template-columns: 1.55fr repeat(11, 1fr) 1.55fr; grid-template-rows: 1.55fr repeat(11, 1fr) 1.55fr; gap: 0; box-shadow: var(--shadow);
@@ -227,8 +227,9 @@ a { color: var(--accent); }
 .center .deck span { transform: translateY(calc(100% + var(--unit) * 0.08)); }
 .center .deck.chance { left: calc(var(--unit) * 0.8); bottom: calc(var(--unit) * 2.6); }
 .center .deck.chest { right: calc(var(--unit) * 0.8); bottom: calc(var(--unit) * 2.6); }
-.center .status { position: absolute; left: 50%; bottom: calc(var(--unit) * 0.25); transform: translateX(-50%); width: 62%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-align: center; font-family: var(--font-ui); font-size: calc(var(--unit) * 0.26); color: var(--board-line); background: rgba(255, 255, 255, .55); border-radius: 8px; padding: 3px 6px; line-height: 1.2; text-wrap: balance; }
-.dice { position: absolute; left: calc(var(--unit) * 0.45); bottom: calc(var(--unit) * 0.3); display: flex; gap: calc(var(--unit) * 0.18); }
+.center .center-bottom { position: absolute; left: calc(var(--unit) * 0.35); right: calc(var(--unit) * 0.35); bottom: calc(var(--unit) * 0.3); display: flex; align-items: center; gap: calc(var(--unit) * 0.3); }
+.center .status { flex: 1 1 auto; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-align: left; font-family: var(--font-ui); font-size: calc(var(--unit) * 0.27); color: var(--board-line); background: rgba(255, 255, 255, .6); border-radius: 8px; padding: 4px 8px; line-height: 1.25; }
+.dice { flex: 0 0 auto; display: flex; gap: calc(var(--unit) * 0.18); }
 .die { width: calc(var(--unit) * 0.85); height: calc(var(--unit) * 0.85); border-radius: 18%; background: #d8242a; box-shadow: inset -2px -3px 0 rgba(0, 0, 0, .25), 2px 3px 4px rgba(0, 0, 0, .3); display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); padding: 12%; gap: 2%; }
 .die span { border-radius: 50%; background: #fff; opacity: 0; }
 .die[data-v="1"] span:nth-child(5), .die[data-v="3"] span:nth-child(5), .die[data-v="5"] span:nth-child(5) { opacity: 1; }
@@ -240,11 +241,14 @@ a { color: var(--accent); }
 @keyframes roll { 0% { transform: rotate(0) scale(.8); } 50% { transform: rotate(180deg) scale(1.15); } 100% { transform: rotate(360deg) scale(1); } }
 
 .tokens { position: absolute; inset: 0; pointer-events: none; }
-.tokens .tok { position: absolute; left: 0; top: 0; width: calc(var(--unit) * 0.62); height: calc(var(--unit) * 0.62); border-radius: 50%; display: grid; place-items: center; font-size: calc(var(--unit) * 0.36); background: radial-gradient(circle at 35% 30%, #fbe28f, var(--gold) 70%); border: 2px solid var(--pc, #333); box-shadow: 0 2px 4px rgba(0, 0, 0, .4); transition: transform .28s cubic-bezier(.3, .8, .4, 1.1); will-change: transform; }
+.tokens .tok { --tok: clamp(26px, calc(var(--unit) * 0.78), 46px); position: absolute; left: 0; top: 0; width: var(--tok); height: var(--tok); border-radius: 50%; display: grid; place-items: center; font-size: calc(var(--tok) * 0.56); line-height: 1; background: radial-gradient(circle at 35% 30%, #fff1b0, var(--gold) 70%); border: 3px solid var(--pc, #333); box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(0, 0, 0, .55); transition: transform .28s cubic-bezier(.3, .8, .4, 1.1); will-change: transform; z-index: 2; }
 .tokens .tok.hop { animation: hop .28s ease-out; }
 @keyframes hop { 50% { scale: 1.25; } }
+.tokens .tok.cur { z-index: 3; }
+.tokens .tok.cur::after { content: ''; position: absolute; inset: -7px; border-radius: 50%; border: 2px solid var(--pc, #333); animation: ring 1.4s ease-out infinite; }
+@keyframes ring { 0% { transform: scale(.8); opacity: .9; } 100% { transform: scale(1.35); opacity: 0; } }
 .tokens .tok.out { opacity: .25; filter: grayscale(1); }
-@media (prefers-reduced-motion: reduce) { .tokens .tok { transition: none; } .die.rolling { animation: none; } .tokens .tok.hop { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .tokens .tok { transition: none; } .die.rolling { animation: none; } .tokens .tok.hop { animation: none; } .tokens .tok.cur::after { animation: none; } }
 
 .dock { grid-area: dock; background: var(--surface); border-top: 1px solid var(--line); padding: 8px max(12px, env(safe-area-inset-left, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 8px; }
 .dock .status-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 14px; }
@@ -2444,8 +2448,7 @@ function buildBoard(boardEl, lang = 'en') {
     <div class="fineprint">${lang === 'ru' ? 'Пародийная настолка по мотивам фильма «Не грози Южному Централу». Любое сходство с настоящими районами — не случайность.' : 'A parody board game inspired by the hood. Any resemblance to real neighborhoods is entirely intentional.'}</div>
     <div class="deck chance"><span>${esc(term(lang, 'chance'))}</span></div>
     <div class="deck chest"><span>${esc(term(lang, 'chest'))}</span></div>
-    <div class="dice" id="dice"><div class="die" data-v="0">${'<span></span>'.repeat(9)}</div><div class="die" data-v="0">${'<span></span>'.repeat(9)}</div></div>
-    <div class="status" id="board-status">Бросай кубики</div>`;
+    <div class="center-bottom"><div class="dice" id="dice"><div class="die" data-v="0">${'<span></span>'.repeat(9)}</div><div class="die" data-v="0">${'<span></span>'.repeat(9)}</div></div><div class="status" id="board-status">Бросай кубики</div></div>`;
   boardEl.appendChild(center);
   const tokens = document.createElement('div');
   tokens.className = 'tokens'; tokens.id = 'tokens';
@@ -2516,6 +2519,7 @@ function ensureTokens(st, refs) {
     }
     el.style.setProperty('--pc', playerColor(st, p.id));
     el.classList.toggle('out', !!p.bankrupt);
+    el.classList.toggle('cur', !p.bankrupt && current(st).id === p.id && st.phase !== PHASE.OVER);
     seen.add(p.id);
   }
   for (const el of [...layer.children]) if (!seen.has(el.dataset.pid)) el.remove();
