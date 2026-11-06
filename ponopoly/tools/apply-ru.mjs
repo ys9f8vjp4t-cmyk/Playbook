@@ -13,11 +13,11 @@ const latin = /[A-Za-z]/;
 const check = (where, s) => { if (typeof s !== 'string' || !s.trim()) problems.push(`${where}: пусто`); else if (latin.test(s)) problems.push(`${where}: латиница в «${s}»`); };
 
 check('logo', set.logo); check('logoSub', set.logoSub);
-const TERMS = ['hospital', 'hospitalShort', 'hospitalIn', 'hospitalFrom', 'visiting', 'parking', 'parkingShort', 'go', 'chance', 'chanceShort', 'chest', 'chestShort', 'dn', 'dnStamp', 'dnUnder', 'tax', 'taxShort', 'robbed', 'robbedShort', 'driveby', 'drivebyShort', 'drivebyEvent', 'og'];
+const TERMS = ['hospital', 'hospitalShort', 'hospitalIn', 'hospitalFrom', 'hospitalAt', 'visiting', 'parking', 'parkingShort', 'go', 'chance', 'chanceShort', 'chest', 'chestShort', 'dn', 'dnStamp', 'dnUnder', 'tax', 'taxShort', 'robbed', 'robbedShort', 'driveby', 'drivebyShort', 'drivebyEvent', 'carjack', 'carjackEvent', 'og'];
 for (const k of TERMS) check(`terms.${k}`, set.terms && set.terms[k]);
 const squares = {};
-for (const s of set.squares || []) { squares[s.i] = { ru: s.ru, ruShort: s.ruShort }; check(`square ${s.i}.ru`, s.ru); check(`square ${s.i}.ruShort`, s.ruShort); const lim = [0, 10, 20, 30].includes(s.i) ? 20 : 16; if ((s.ruShort || '').replace(/\|/g, '').length > lim) problems.push(`square ${s.i}: ruShort длиннее ${lim}: «${s.ruShort}»`); }
-for (let i = 0; i < 40; i++) if (!squares[i]) problems.push(`нет клетки ${i}`);
+for (const s of set.squares || []) { squares[s.i] = { ru: s.ru, ruShort: s.ruShort }; check(`square ${s.i}.ru`, s.ru); check(`square ${s.i}.ruShort`, s.ruShort); const lim = [0, 12, 24, 36].includes(s.i) ? 20 : 16; if ((s.ruShort || '').replace(/\|/g, '').length > lim) problems.push(`square ${s.i}: ruShort длиннее ${lim}: «${s.ruShort}»`); }
+for (let i = 0; i < 48; i++) if (!squares[i]) problems.push(`нет клетки ${i}`);
 if (!Array.isArray(set.bots) || set.bots.length !== 8) problems.push('ботов должно быть 8');
 (set.bots || []).forEach((b, i) => check(`bot ${i}`, b));
 const cards = {};

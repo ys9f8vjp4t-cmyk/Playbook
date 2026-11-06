@@ -78,7 +78,7 @@ export class Online {
   settings(settings) { this.send({ t: 'settings', settings }); }
   action(action) { this.send({ t: 'action', action }); }
   leave() { this.send({ t: 'leave' }); this.forget(); this.close(); }
-  forget() { this.code = null; this.you = null; this.secret = null; this.room = null; this.state = null; setPref('online', null); }
+  forget() { this.code = null; this.you = null; this.secret = null; this.room = null; this.state = null; this._langSent = false; setPref('online', null); }
   close() { this.closedByUser = true; clearTimeout(this.timer); try { this.ws && this.ws.close(); } catch {} this.ws = null; }
 
   static savedSession() { return getPref('online', null); }

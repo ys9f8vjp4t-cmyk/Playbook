@@ -35,7 +35,7 @@ async function waitFor(page, fn, ms = 15000, every = 100) {
 
 const errors = [];
 function watch(page, tag) {
-  page.on('pageerror', (e) => { errors.push(`${tag}: ${e.message}`); console.error('PAGEERROR', tag, e.message); });
+  page.on('pageerror', (e) => { errors.push(`${tag}: ${e.message}`); console.error('PAGEERROR', tag, e.message, '\n', (e.stack || '').split('\n').slice(0, 6).join('\n')); });
   page.on('console', (m) => { if (m.type() === 'error' && !/favicon|fonts|telegram-web-app|net::ERR|Failed to load resource/.test(m.text())) { errors.push(`${tag}: ${m.text()}`); console.error('CONSOLE', tag, m.text()); } });
 }
 
@@ -61,9 +61,9 @@ try {
   await page.click('#btn-start-local');
   await page.waitForSelector('#screen-game.active');
   await page.waitForTimeout(400);
-  const ruCheck = await page.evaluate(() => ({ watts: document.querySelector('.cell[data-idx="1"] .name').textContent, logo: document.querySelector('.big-logo').textContent, latin: [...document.querySelectorAll('.cell .name')].map((n) => n.textContent).filter((t) => /[A-Za-z]/.test(t)) }));
+  const ruCheck = await page.evaluate(() => ({ watts: document.querySelector('.cell[data-idx="47"] .name').textContent, logo: document.querySelector('.logo-box').textContent, latin: [...document.querySelectorAll('.cell .name')].map((n) => n.textContent).filter((t) => /[A-Za-z]/.test(t)) }));
   if (!/Уоттс/.test(ruCheck.watts) || /PO'NOPOLY/.test(ruCheck.logo) || ruCheck.latin.length) throw new Error('доска не русифицирована: ' + JSON.stringify(ruCheck));
-  await page.click('.cell[data-idx="10"]');
+  await page.click('.cell[data-idx="12"]');
   await page.waitForSelector('.modal .deed');
   const deedHead = await page.$eval('.modal .deed-head', (e) => e.textContent);
   if (/[A-Za-z]/.test(deedHead)) throw new Error('карточка клетки не русифицирована: ' + deedHead);
@@ -72,7 +72,7 @@ try {
   // переключаем обратно через игровое меню и возвращаемся в меню
   await page.click('#dock [data-act="menu"]');
   await page.click('.modal [data-m="lang"]');
-  await page.waitForFunction(() => /WATTS/i.test(document.querySelector('.cell[data-idx="1"] .name').textContent));
+  await page.waitForFunction(() => /WATTS/i.test(document.querySelector('.cell[data-idx="47"] .name').textContent));
   log('ru: доска, карточки и боты по-русски, переключение туда-обратно работает');
   await page.click('#dock [data-act="menu"]');
   await page.click('.modal [data-m="leave"]');
@@ -111,7 +111,7 @@ try {
   await page.evaluate(() => { const m = document.querySelector('.modal'); if (m) m.remove(); });
   await shot(page, '05-midgame');
   // карточка клетки
-  await page.click('.cell[data-idx="1"]');
+  await page.click('.cell[data-idx="47"]');
   await page.waitForSelector('.modal .deed');
   await shot(page, '06-deed');
   await page.evaluate(() => document.querySelector('.modal').remove());

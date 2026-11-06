@@ -1,5 +1,5 @@
 // Простые, но вменяемые боты. Работают и в браузере, и на сервере.
-import { BOARD, groupOf, groupMembers, JAIL_FINE, MAX_HOUSES } from './data.js';
+import { BOARD, PROP_GROUPS, groupOf, groupMembers, JAIL_FINE, MAX_HOUSES } from './data.js';
 import { legalActions, whoActs, netWorth, liquidValue, ownsGroup, housesOnBoard, checks, unmortgageCost, PHASE, current, ownedBy } from './engine.js';
 
 function reserve(st) {
@@ -18,7 +18,7 @@ export function propValue(st, pid, idx) {
     if (mine === members.length - 1 && others === 0) v *= 1.7;
     else if (mine > 0 && others === 0) v *= 1.25;
     if (others > 0) v *= 0.8;
-    if (['orange', 'red', 'lightblue'].includes(sq.group)) v *= 1.1; // самые «проходные» группы
+    if (['orange', 'red', 'pink'].includes(sq.group)) v *= 1.1; // самые «проходные» группы
   } else if (sq.type === 'rail') v *= 1 + 0.15 * mine;
   else v *= mine ? 1.15 : 0.85;
   if (st.props[idx].mortgaged) v *= 0.7;
@@ -102,7 +102,7 @@ function evaluateTrade(st, p) {
 function proposeTrade(st, p) {
   if ((st.tradesThisTurn || 0) > 0) return null;
   if (st.turnNo % 2 !== 0) return null;
-  const groups = ['brown', 'lightblue', 'pink', 'orange', 'red', 'yellow', 'green', 'darkblue'];
+  const groups = PROP_GROUPS;
   for (const g of groups) {
     const members = groupMembers(g);
     const mine = members.filter((i) => st.props[i].owner === p.id);

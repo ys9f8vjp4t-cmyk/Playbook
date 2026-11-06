@@ -3,7 +3,7 @@
 // Node server (online rooms). Every rule lives here; the UI only renders.
 
 import {
-  BOARD, CHANCE, CHEST, CARD_BY_ID, GO_SALARY, JAIL_FINE, JAIL_POS, RAIL_RENT, MAX_HOUSES,
+  BOARD, N, CHANCE, CHEST, CARD_BY_ID, GO_SALARY, JAIL_FINE, JAIL_POS, RAIL_RENT, MAX_HOUSES,
   DEFAULT_SETTINGS, isOwnable, groupOf, groupMembers, sqName, sqRef, term, cardText, deckName,
 } from './data.js';
 
@@ -49,7 +49,7 @@ export function createGame({ players, settings = {}, seed = Date.now() % 2147483
   const rng = mulberry32(seed);
   const s = { ...DEFAULT_SETTINGS, ...settings };
   const st = {
-    v: 1,
+    v: 2,
     seed,
     settings: s,
     players: players.map((p, i) => ({
@@ -64,6 +64,7 @@ export function createGame({ players, settings = {}, seed = Date.now() % 2147483
       jailTurns: 0,
       jailCards: [],
       bankrupt: false,
+      skip: false,
     })),
     props: {},
     cur: 0,
@@ -164,8 +165,8 @@ function log(st, text, pid = null) {
 }
 
 function nearest(from, type) {
-  for (let k = 1; k <= 40; k++) {
-    const i = (from + k) % 40;
+  for (let k = 1; k <= N; k++) {
+    const i = (from + k) % N;
     if (BOARD[i].type === type) return i;
   }
   return from;
@@ -224,10 +225,10 @@ function passGo(st, p, ev) {
 
 function moveForward(st, p, steps, ev) {
   const from = p.pos;
-  const to = (from + steps) % 40;
+  const to = (from + steps) % N;
   p.pos = to;
   ev.push({ type: 'move', pid: p.id, from, to, steps, mode: 'forward' });
-  if (to < from || steps >= 40) passGo(st, p, ev);
+  if (to < from || steps >= N) passGo(st, p, ev);
 }
 
 function moveTo(st, p, to, ev, collect = true) {
@@ -239,7 +240,7 @@ function moveTo(st, p, to, ev, collect = true) {
 
 function moveBack(st, p, n, ev) {
   const from = p.pos;
-  const to = (from - n + 40) % 40;
+  const to = (from - n + N) % N;
   p.pos = to;
   ev.push({ type: 'move', pid: p.id, from, to, mode: 'back' });
 }
@@ -282,10 +283,10 @@ function land(st, p, ev, opts = {}) {
     case 'tax': {
       if (sq.percent) {
         st.phase = PHASE.TAX;
-        log(st, `${p.name} попадает на ${term(st, 'tax')}: $${sq.amount} или ${sq.percent}% от всего имущества.`, p.id);
+        log(st, `${p.name} попадает на ${sqRef(st, sq.i)}: $${sq.amount} или ${sq.percent}% от всего имущества.`, p.id);
         return;
       }
-      log(st, `${p.name} попадает на ${term(st, 'robbed')} — отбирают $${sq.amount}.`, p.id);
+      log(st, `${p.name} попадает на ${sqRef(st, sq.i)} — отбирают $${sq.amount}.`, p.id);
       st.phase = PHASE.END;
       charge(st, p.id, sq.amount, null, ev, 'ограбление');
       return;
@@ -302,7 +303,14 @@ function land(st, p, ev, opts = {}) {
       return;
     }
     case 'gotojail':
-      sendToJail(st, p, ev, term(st, 'drivebyEvent'));
+      sendToJail(st, p, ev, term(st, 'carjackEvent'));
+      return;
+    case 'driveby':
+      p.skip = true;
+      st.doubles = 0;
+      st.phase = PHASE.END;
+      ev.push({ type: 'driveby', pid: p.id });
+      log(st, `${p.name} ${term(st, 'drivebyEvent')}.`, p.id);
       return;
     case 'parking': {
       st.phase = PHASE.END;
@@ -399,9 +407,13 @@ function rngFor(st, external) {
 // ---------- turn flow ----------
 function nextTurn(st, ev) {
   const n = st.players.length;
-  for (let k = 1; k <= n; k++) {
+  let skipped = 0;
+  for (let k = 1; k <= n * 2; k++) {
     const i = (st.cur + k) % n;
-    if (!st.players[i].bankrupt) { st.cur = i; break; }
+    const q = st.players[i];
+    if (q.bankrupt) continue;
+    if (q.skip && skipped < n) { q.skip = false; skipped++; log(st, `${q.name} отлёживается после обстрела и пропускает ход.`, q.id); ev.push({ type: 'skipped', pid: q.id }); continue; }
+    st.cur = i; break;
   }
   st.phase = PHASE.ROLL;
   st.dice = null; st.doubles = 0; st.rolled = false; st.card = null; st.tradesThisTurn = 0;
@@ -913,6 +925,6 @@ export function applyAction(st, action, rng) {
 export function serialize(st) { return JSON.stringify(st); }
 export function deserialize(json) {
   const st = JSON.parse(json);
-  if (!st || st.v !== 1 || !Array.isArray(st.players)) throw new EngineError('Повреждённое сохранение');
+  if (!st || st.v !== 2 || !Array.isArray(st.players)) throw new EngineError('Повреждённое сохранение');
   return st;
 }

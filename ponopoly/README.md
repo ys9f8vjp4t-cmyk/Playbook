@@ -10,6 +10,31 @@ Oakland, Echo Park, Alvarado, Florence, Pawn Shop, Nail Salon, Tax Evasion, Robb
 
 Интерфейс на русском, названия на доске — как на реквизите.
 
+## Доска из фильма
+
+Сцена с Po'Nopoly есть только в **unrated-версии** фильма (после выхода Эштрея из тюрьмы
+Прич, Лок Дог и Бешеные Ноги садятся играть); в прокатной R-версии её нет. Доска в игре
+воспроизведена по кадрам этой сцены: **11 клеток на стороне, 48 всего**, пудрово-голубое
+поле, цветные полосы на внутреннем крае клеток, горизонтальный логотип PO'NOPOLY в рамке,
+подпись «by Darker Brothers» готическим шрифтом, персонаж с кубиками над логотипом,
+зоны колод «NO CHANCE» и «COMMUNITY SERVICE» пунктиром.
+
+Прочитано с кадров (в `js/data.js` такие клетки помечены `seen: true`):
+сторона целиком — Westchester, No Chance, Oakland, Robbed (пистолет), Tax Evasion
+(«PAY 10% OR …»), Echo Park, Community Service (ядро с цепью), Alvarado, Florence,
+Pawn Shop, Normandie; угол с красным крестом (County Hospital); на соседней стороне —
+Drive-By (пистолет), Roscoe's, Watts с фиолетовыми полосами; клетка Car Jacking;
+карточки Disconnect Notice, купчие «RENT $12» с цветными полосами, жёлтые купюры $100,
+золотые фишки (лоурайдер, пейджер, гильза), красные кубики.
+
+Остальные 20 с лишним клеток в кадр не попали и **реконструированы** в том же духе
+(Crenshaw, Slauson, Inglewood, Compton, Figueroa, Hoover, Lynwood, Koreatown, Hollywood,
+Silver Lake, Venice Beach, Santa Monica, Malibu, Long Beach, Culver City, Westwood,
+Brentwood, Baldwin Hills, Beverly Hills, Nail Salon, Liquor Store, Swap Meet, Barbershop,
+Check Cashing). Цены и аренда — по шкале классической «Монополии»; мелкий текст под
+названиями на кадрах не читается. Если пришлёте стоп-кадры других сторон доски, клетки
+можно заменить на точные.
+
 ## Что умеет
 
 - **Локальная игра**: 2–6 игроков на одном телефоне (передавая по кругу) и/или боты,

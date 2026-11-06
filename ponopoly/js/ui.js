@@ -1,5 +1,5 @@
 // Рендер доски, панелей и модальных окон. Ничего не знает о правилах — только показывает state.
-import { BOARD, GROUPS, TOKENS, PLAYER_COLORS, RAIL_RENT, MAX_HOUSES, JAIL_FINE, CARD_BY_ID, groupOf, sqName, sqShort, term, cardText, deckName, langOf } from './data.js';
+import { BOARD, N, SIDE, GROUPS, TOKENS, PLAYER_COLORS, RAIL_RENT, MAX_HOUSES, JAIL_FINE, CARD_BY_ID, groupOf, sqName, sqShort, term, cardText, deckName, langOf } from './data.js';
 import { PHASE, whoActs, current, legalActions, netWorth, liquidValue, ownedBy, checks, mortgageValue, unmortgageCost, rentFor, ownsGroup, describeTrade } from './engine.js';
 import { haptic } from './telegram.js';
 
@@ -22,46 +22,87 @@ const RAIL_ICON = { 5: '💍', 15: '🍾', 25: '👟', 35: '💵' };
 const UTIL_ICON = { 12: '💅', 28: '💈' };
 
 // ---------- board ----------
+// Простые оригинальные пиктограммы для особых клеток (в духе рисунков на реквизите).
+const ICON = {
+  gun: '<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M2 8h46l6-4h8v10h-6l-3 4H34l-2 6h-8l-2-6h-4l-4 14h-9l5-14H2z" fill="currentColor"/></svg>',
+  chain: '<svg viewBox="0 0 64 44" aria-hidden="true"><circle cx="16" cy="28" r="14" fill="currentColor"/><path d="M28 22c6-8 12-8 18-2M46 20c6-6 10-4 14-2" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/><rect x="44" y="8" width="10" height="8" rx="4" fill="none" stroke="currentColor" stroke-width="3"/><rect x="54" y="14" width="8" height="7" rx="3.5" fill="none" stroke="currentColor" stroke-width="3"/></svg>',
+  car: '<svg viewBox="0 0 64 36" aria-hidden="true"><path d="M8 24l6-12h30l10 12v6H8z" fill="currentColor"/><circle cx="18" cy="30" r="5" fill="#fff" stroke="currentColor" stroke-width="3"/><circle cx="46" cy="30" r="5" fill="#fff" stroke="currentColor" stroke-width="3"/><path d="M58 8l4-6M62 14l6-2" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>',
+  cross: '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M14 2h12v12h12v12H26v12H14V26H2V14h12z" fill="#d8242a"/></svg>',
+  arrow: '<svg viewBox="0 0 64 32" aria-hidden="true"><path d="M2 10h40V2l20 14-20 14v-8H2z" fill="currentColor"/></svg>',
+  pawn: '<svg viewBox="0 0 64 40" aria-hidden="true"><circle cx="14" cy="26" r="11" fill="currentColor"/><circle cx="50" cy="26" r="11" fill="currentColor"/><circle cx="32" cy="12" r="11" fill="currentColor"/></svg>',
+  bottle: '<svg viewBox="0 0 32 64" aria-hidden="true"><path d="M12 2h8v14c6 4 8 8 8 14v30a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V30c0-6 2-10 8-14z" fill="currentColor"/><rect x="8" y="34" width="16" height="12" fill="#fff" opacity=".7"/></svg>',
+  tag: '<svg viewBox="0 0 64 48" aria-hidden="true"><path d="M4 4h28l28 22-16 18L4 32z" fill="currentColor"/><circle cx="14" cy="14" r="4" fill="#fff"/></svg>',
+  bill: '<svg viewBox="0 0 64 36" aria-hidden="true"><rect x="2" y="2" width="60" height="32" rx="3" fill="currentColor"/><ellipse cx="32" cy="18" rx="10" ry="12" fill="#fff" opacity=".8"/><text x="32" y="23" font-size="14" text-anchor="middle" font-family="sans-serif" font-weight="700" fill="currentColor">$</text></svg>',
+  nails: '<svg viewBox="0 0 40 64" aria-hidden="true"><rect x="14" y="2" width="12" height="14" rx="2" fill="currentColor"/><path d="M8 20h24l2 38a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4z" fill="currentColor"/><path d="M12 30h16l1 24H11z" fill="#e4489a"/></svg>',
+  pole: '<svg viewBox="0 0 24 64" aria-hidden="true"><rect x="4" y="6" width="16" height="52" rx="6" fill="#fff" stroke="currentColor" stroke-width="2"/><path d="M4 14l16-6M4 26l16-6M4 38l16-6M4 50l16-6" stroke="#d8242a" stroke-width="4"/><path d="M4 20l16-6M4 32l16-6M4 44l16-6" stroke="#2a5db8" stroke-width="4"/></svg>',
+  parking: '<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="4" fill="#2a5db8"/><text x="20" y="31" font-size="30" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" fill="#fff">P</text></svg>',
+};
+export const ICON_BY_SQUARE = (sq) => {
+  switch (sq.type) {
+    case 'go': return ICON.arrow;
+    case 'jail': return ICON.cross;
+    case 'parking': return ICON.parking;
+    case 'gotojail': return ICON.car;
+    case 'driveby': return ICON.gun;
+    case 'tax': return sq.percent ? '' : ICON.gun;
+    case 'chest': return ICON.chain;
+    case 'rail': return { 'Pawn Shop': ICON.pawn, 'Liquor Store': ICON.bottle, 'Swap Meet': ICON.tag, 'Check Cashing': ICON.bill }[sq.name] || ICON.tag;
+    case 'util': return sq.name === 'Barbershop' ? ICON.pole : ICON.nails;
+    default: return '';
+  }
+};
+
 export function dnTag(st) { return langOf(st) === 'ru' ? '(в залоге)' : '(DN)'; }
 
 export function buildBoard(boardEl, lang = 'en') {
   boardEl.innerHTML = '';
+  boardEl.setAttribute('aria-label', `Доска ${term(lang, 'logo')}`);
+  boardEl.dataset.lang = lang;
   const cells = [];
   for (const sq of BOARD) {
     const el = document.createElement('div');
     const pos = gridPos(sq.i);
-    el.className = `cell sq-${sq.type} ${pos.side}`;
+    el.className = `cell sq-${sq.type} ${pos.side}${sq.seen ? ' seen' : ''}`;
     el.style.gridRow = pos.row; el.style.gridColumn = pos.col;
     el.dataset.idx = sq.i;
     el.setAttribute('role', 'button');
     el.setAttribute('aria-label', sqName(lang, sq.i));
     const g = groupOf(sq);
-    if (g && sq.type === 'prop') el.style.setProperty('--gc', GROUPS[g].color);
-    if (sq.type === 'rail') el.style.setProperty('--gc', '#2b2b2b');
-    if (sq.type === 'util') el.style.setProperty('--gc', '#8a8f99');
-    let inner = '';
-    if (sq.type === 'prop' || sq.type === 'rail' || sq.type === 'util') {
-      inner += `<div class="band"></div>`;
-      const ico = sq.type === 'rail' ? RAIL_ICON[sq.i] : sq.type === 'util' ? UTIL_ICON[sq.i] : '';
-      inner += `<div class="name">${ico ? `<span class="ico">${ico}</span> ` : ''}${esc(sqShort(lang, sq.i))}</div>`;
-    } else if (pos.side === 'corner') {
-      const ico = ICONS[sq.type] || '';
-      inner += `<div class="name"><span class="ico">${ico}</span>${esc(sqShort(lang, sq.i))}</div>`;
+    if (g) el.style.setProperty('--gc', GROUPS[g].color);
+    const name = esc(sqShort(lang, sq.i));
+    let body = '';
+    if (sq.type === 'prop') {
+      body = `<div class="band"></div><div class="body"><div class="name">${name}</div><div class="price">$${sq.price}</div></div>`;
+    } else if (sq.type === 'rail' || sq.type === 'util') {
+      body = `<div class="band"></div><div class="body"><div class="name">${name}</div><div class="ico">${ICON_BY_SQUARE(sq)}</div><div class="price">$${sq.price}</div></div>`;
+    } else if (sq.type === 'chance') {
+      body = `<div class="band none"></div><div class="body"><div class="name">${name}</div><div class="ico q">?</div></div>`;
+    } else if (sq.type === 'chest') {
+      body = `<div class="band none"></div><div class="body"><div class="name">${name}</div><div class="ico">${ICON.chain}</div></div>`;
+    } else if (sq.type === 'tax' && sq.percent) {
+      body = `<div class="band none"></div><div class="body"><div class="name">${name}</div><div class="diamond">◆</div><div class="sub">${lang === 'ru' ? '10% ИЛИ $' + sq.amount : 'PAY 10% OR $' + sq.amount}</div></div>`;
+    } else if (sq.type === 'tax') {
+      body = `<div class="band none"></div><div class="body"><div class="ico">${ICON.gun}</div><div class="name">${name}</div><div class="sub">${lang === 'ru' ? 'ОТДАЙ $' + sq.amount : 'HAND OVER $' + sq.amount}</div></div>`;
+    } else if (sq.type === 'driveby') {
+      body = `<div class="band none"></div><div class="body"><div class="ico">${ICON.gun}</div><div class="name">${name}</div><div class="sub">${lang === 'ru' ? 'ПРОПУСК ХОДА' : 'LOSE A TURN'}</div></div>`;
     } else {
-      const ico = sq.type === 'chance' ? '?' : sq.type === 'chest' ? ICONS.chest : sq.i === 38 ? '🔫' : ICONS.tax;
-      inner += `<div class="band" style="background:transparent;border:0"></div><div class="name"><span class="ico">${ico}</span>${esc(sqShort(lang, sq.i))}</div>`;
+      // углы
+      const sub = sq.type === 'go' ? (lang === 'ru' ? 'ПОЛУЧИ $200' : 'COLLECT $200') : sq.type === 'jail' ? (lang === 'ru' ? 'ПРОЕЗДОМ' : 'JUST VISITING') : sq.type === 'gotojail' ? (lang === 'ru' ? 'В БОЛЬНИЦУ' : 'GO TO HOSPITAL') : '';
+      body = `<div class="body corner-body"><div class="ico">${ICON_BY_SQUARE(sq)}</div><div class="name">${name}</div>${sub ? `<div class="sub">${sub}</div>` : ''}</div>`;
     }
-    el.innerHTML = inner;
+    el.innerHTML = body;
     boardEl.appendChild(el);
     cells[sq.i] = el;
   }
   const center = document.createElement('div');
   center.className = 'center';
   center.innerHTML = `
-    <div class="deck chance">${esc(term(lang, 'chance')).replace(/ /g, '<br>')}</div>
-    <div class="deck chest">${esc(term(lang, 'chest')).replace(/ /g, '<br>')}</div>
-    <div class="big-logo">${esc(term(lang, 'logo'))}<small>${esc(term(lang, 'logoSub'))}</small></div>
     ${mascotSvg()}
+    <div class="logo-box">${esc(term(lang, 'logo'))}</div>
+    <div class="logo-sub">${esc(term(lang, 'logoSub'))}</div>
+    <div class="fineprint">${lang === 'ru' ? 'Пародийная настолка по мотивам фильма «Не грози Южному Централу». Любое сходство с настоящими районами — не случайность.' : 'A parody board game inspired by the hood. Any resemblance to real neighborhoods is entirely intentional.'}</div>
+    <div class="deck chance"><span>${esc(term(lang, 'chance'))}</span></div>
+    <div class="deck chest"><span>${esc(term(lang, 'chest'))}</span></div>
     <div class="dice" id="dice"><div class="die" data-v="0">${'<span></span>'.repeat(9)}</div><div class="die" data-v="0">${'<span></span>'.repeat(9)}</div></div>
     <div class="status" id="board-status">Бросай кубики</div>`;
   boardEl.appendChild(center);
@@ -71,29 +112,30 @@ export function buildBoard(boardEl, lang = 'en') {
   return { boardEl, cells, center, tokens, dice: center.querySelectorAll('.die'), status: $('#board-status', center), lang };
 }
 
+// Позиция клетки в сетке (SIDE клеток на сторону вместе с углом). GO — правый нижний угол,
+// ход против часовой стрелки: низ справа налево, левый столбец снизу вверх, верх слева направо, правый столбец сверху вниз.
 function gridPos(i) {
-  if (i === 0) return { row: 11, col: 11, side: 'corner' };
-  if (i < 10) return { row: 11, col: 11 - i, side: 'side-bottom' };
-  if (i === 10) return { row: 11, col: 1, side: 'corner' };
-  if (i < 20) return { row: 11 - (i - 10), col: 1, side: 'side-left' };
-  if (i === 20) return { row: 1, col: 1, side: 'corner' };
-  if (i < 30) return { row: 1, col: 1 + (i - 20), side: 'side-top' };
-  if (i === 30) return { row: 1, col: 11, side: 'corner' };
-  return { row: 1 + (i - 30), col: 11, side: 'side-right' };
+  const G = SIDE + 1; // 13×13
+  const side = Math.floor(i / SIDE), k = i % SIDE;
+  if (side === 0) return k === 0 ? { row: G, col: G, side: 'corner' } : { row: G, col: G - k, side: 'side-bottom' };
+  if (side === 1) return k === 0 ? { row: G, col: 1, side: 'corner' } : { row: G - k, col: 1, side: 'side-left' };
+  if (side === 2) return k === 0 ? { row: 1, col: 1, side: 'corner' } : { row: 1, col: 1 + k, side: 'side-top' };
+  return k === 0 ? { row: 1, col: G, side: 'corner' } : { row: 1 + k, col: G, side: 'side-right' };
 }
 
 function mascotSvg() {
-  // Пародия на дядюшку-богача: бини, очки, золотая цепь, кубики в руке.
-  return `<svg class="mascot" viewBox="0 0 100 100" aria-hidden="true">
-    <circle cx="50" cy="52" r="26" fill="#7a4b2a"/>
-    <path d="M24 44 Q50 18 76 44 L76 50 Q50 40 24 50 Z" fill="#1a2a35"/>
-    <rect x="24" y="44" width="52" height="7" rx="3" fill="#2d6e3a"/>
-    <rect x="28" y="52" width="18" height="9" rx="2" fill="#111"/><rect x="54" y="52" width="18" height="9" rx="2" fill="#111"/><rect x="46" y="54" width="8" height="3" fill="#111"/>
-    <path d="M40 70 Q50 78 60 70" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <path d="M30 80 Q50 100 70 80" stroke="#d9a521" stroke-width="4" fill="none"/>
-    <circle cx="50" cy="90" r="5" fill="#d9a521"/>
-    <rect x="76" y="66" width="13" height="13" rx="2" fill="#d8242a" transform="rotate(12 82 72)"/><circle cx="82" cy="72" r="1.6" fill="#fff"/>
-    <rect x="86" y="80" width="12" height="12" rx="2" fill="#d8242a" transform="rotate(-20 92 86)"/><circle cx="89" cy="83" r="1.4" fill="#fff"/><circle cx="95" cy="89" r="1.4" fill="#fff"/>
+  // Оригинальный персонаж: парень в бини и тёмных очках с золотой цепью, кидает кубики.
+  return `<svg class="mascot" viewBox="0 0 120 100" aria-hidden="true">
+    <circle cx="50" cy="48" r="26" fill="#7a4b2a"/>
+    <path d="M24 40 Q50 14 76 40 L76 46 Q50 36 24 46 Z" fill="#1a2a35"/>
+    <rect x="24" y="40" width="52" height="7" rx="3" fill="#2d6e3a"/>
+    <rect x="28" y="48" width="18" height="9" rx="2" fill="#111"/><rect x="54" y="48" width="18" height="9" rx="2" fill="#111"/><rect x="46" y="50" width="8" height="3" fill="#111"/>
+    <path d="M40 66 Q50 74 60 66" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M30 76 Q50 96 70 76" stroke="#d9a521" stroke-width="4" fill="none"/>
+    <circle cx="50" cy="86" r="5" fill="#d9a521"/>
+    <path d="M78 60 q14 -8 22 2" stroke="#7a4b2a" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <rect x="92" y="40" width="14" height="14" rx="2" fill="#d8242a" transform="rotate(14 99 47)"/><circle cx="99" cy="47" r="1.8" fill="#fff"/>
+    <rect x="104" y="56" width="12" height="12" rx="2" fill="#d8242a" transform="rotate(-18 110 62)"/><circle cx="107" cy="59" r="1.5" fill="#fff"/><circle cx="113" cy="65" r="1.5" fill="#fff"/>
   </svg>`;
 }
 
@@ -178,8 +220,8 @@ export async function animateMove(st, refs, ev) {
   const el = refs.tokens.querySelector(`[data-pid="${ev.pid}"]`);
   if (!el || reduced()) { positionTokens(st, refs); return; }
   let path = [];
-  if (ev.mode === 'forward') { let i = ev.from; while (i !== ev.to) { i = (i + 1) % 40; path.push(i); } if (!path.length) path = [ev.to]; }
-  else if (ev.mode === 'back') { let i = ev.from; while (i !== ev.to) { i = (i + 39) % 40; path.push(i); } }
+  if (ev.mode === 'forward') { let i = ev.from; while (i !== ev.to) { i = (i + 1) % N; path.push(i); } if (!path.length) path = [ev.to]; }
+  else if (ev.mode === 'back') { let i = ev.from; while (i !== ev.to) { i = (i + N - 1) % N; path.push(i); } }
   else path = [ev.to];
   const per = Math.max(60, Math.min(130, 1300 / path.length));
   const overrides = {};
@@ -240,7 +282,7 @@ export function renderDock(st, el, ctx, busy = false) {
     switch (st.phase) {
       case PHASE.ROLL:
         if (p.inJail) {
-          status = `<span>${you}${cap(`ты ${term(st, 'hospitalIn')} (попытка ${p.jailTurns + 1}/3)`)}</span>`;
+          status = `<span>${you}${cap(`ты ${term(st, 'hospitalAt')} (попытка ${p.jailTurns + 1}/3)`)}</span>`;
           main = btn('🎲 Бросить', 'btn-primary', 'roll', { pulse: true }) + (legal.includes('jail_pay') ? btn(`Заплатить ${money(JAIL_FINE)}`, '', 'jail_pay') : '') + (legal.includes('jail_card') ? btn('Карта выписки', 'btn-gold', 'jail_card') : '');
         } else {
           status = `<span>${you}${cap(st.doubles > 0 ? 'дубль — бросай ещё' : 'твой ход')}</span>`;
@@ -352,7 +394,7 @@ export function squareHtml(st, idx, viewer) {
       <div class="deed-foot"><span>Хата: ${money(sq.house)}</span><span>Залог: ${money(mortgageValue(idx))}</span><span>Группа: ${GROUPS[g].name}</span></div>`;
   } else if (sq.type === 'rail') {
     body = `<table>${RAIL_RENT.map((r, i) => `<tr class="${ps.owner && i === (BOARD.filter((s) => s.type === 'rail' && st.props[s.i].owner === ps.owner).length - 1) ? 'now' : ''}"><td>${i + 1} ${i === 0 ? 'точка' : i < 4 ? 'точки' : ''} у хозяина</td><td>$${r}</td></tr>`).join('')}</table>
-      <div class="deed-foot"><span>Залог: ${money(mortgageValue(idx))}</span><span>Ломбард, ликёрка, барахолка, обнал</span></div>`;
+      <div class="deed-foot"><span>Залог: ${money(mortgageValue(idx))}</span><span>${BOARD.filter((s) => s.type === 'rail').map((s) => esc(sqName(st, s.i))).join(', ')}</span></div>`;
   } else if (sq.type === 'util') {
     body = `<table><tr><td>1 салон у хозяина</td><td>кубики × 4</td></tr><tr><td>2 салона у хозяина</td><td>кубики × 10</td></tr></table>
       <div class="deed-foot"><span>Залог: ${money(mortgageValue(idx))}</span></div>`;
@@ -446,7 +488,7 @@ export function playerHtml(st, pid, viewerPid) {
   const p = st.players.find((x) => x.id === pid);
   const owned = ownedBy(st, pid).sort((a, b) => a - b);
   return `<h2><span class="tok" style="display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #fbe28f, var(--gold) 70%);border:2px solid ${playerColor(st, pid)};font-size:18px">${tokenOf(p.token).emoji}</span> ${esc(p.name)} ${p.bot ? '🤖' : ''}</h2>
-    <div class="sub">${p.bankrupt ? 'Банкрот' : `Наличные ${money(p.cash)} · имущество ${money(netWorth(st, pid))}`}${p.inJail ? ` · ${term(st, 'hospitalIn')}` : ''}${p.jailCards.length ? ` · карты выписки ×${p.jailCards.length}` : ''} · клетка: ${esc(sqName(st, p.pos))}</div>
+    <div class="sub">${p.bankrupt ? 'Банкрот' : `Наличные ${money(p.cash)} · имущество ${money(netWorth(st, pid))}`}${p.inJail ? ` · ${term(st, 'hospitalAt')}` : ''}${p.jailCards.length ? ` · карты выписки ×${p.jailCards.length}` : ''} · клетка: ${esc(sqName(st, p.pos))}</div>
     <div class="list">${owned.length ? owned.map((i) => propItemHtml(st, i, viewerPid, viewerPid === pid)).join('') : '<div class="sub">Нет имущества</div>'}</div>
     <div class="actions"><button class="btn" data-close="1">Закрыть</button></div>`;
 }
@@ -482,10 +524,10 @@ export function rulesHtml(lang = 'en') {
   const n = (i) => esc(sqName(lang, i));
   const t = (k) => esc(term(lang, k));
   return `<div class="rules">
-    <p>Po'Nopoly — пародийная «Монополия» из фильма «Не грози Южному Централу, попивая сок у себя в квартале» (1996). Правила классические, названия — с той самой доски${lang === 'ru' ? ', переведённые на русский' : ''}.</p>
+    <p>${t('logo')} — пародийная «Монополия» из фильма «Не грози Южному Централу, попивая сок у себя в квартале» (1996). Правила классические, названия — с той самой доски${lang === 'ru' ? ', переведённые на русский' : ''}.</p>
     <h3>Цель</h3><p>Остаться последним, кто не обанкротился.</p>
     <h3>Ход</h3><ul><li>Бросаешь два кубика и идёшь по часовой стрелке. Дубль — ходишь ещё раз; три дубля подряд — ${t('hospitalIn')}.</li><li>Проходя СТАРТ, получаешь $200.</li><li>Встал на свободную клетку — можешь купить. Отказался — клетка уходит на аукцион.</li><li>Встал на чужую — платишь аренду. Полная цветовая группа без построек удваивает аренду.</li></ul>
-    <h3>Клетки с доски</h3><ul><li><b>${t('chanceShort')}</b> и <b>${t('chestShort')}</b> — колоды карточек.</li><li><b>${t('tax')}</b> — $200 или 10% от всего имущества, на выбор.</li><li><b>${t('robbed')}</b> — минус $100.</li><li><b>${t('driveby')}</b> — прямиком ${t('hospitalIn')}. Выйти: дубль, $50 или карта выписки. С третьей попытки платишь $50 и выходишь.</li><li><b>${n(5)}, ${n(15)}, ${n(25)}, ${n(35)}</b> — «точки», аренда растёт с их количеством: $25 / $50 / $100 / $200.</li><li><b>${n(12)}, ${n(28)}</b> — аренда = кубики × 4 (× 10, если оба у одного хозяина).</li></ul>
+    <h3>Клетки с доски</h3><ul><li><b>${t('chanceShort')}</b> и <b>${t('chestShort')}</b> — колоды карточек.</li><li><b>${t('tax')}</b> — $200 или 10% от всего имущества, на выбор.</li><li><b>${t('robbed')}</b> — минус $100.</li><li><b>${t('hospital')}</b> — лежишь, пока не выбросишь дубль, не заплатишь $50 или не используешь карту выписки. С третьей попытки платишь $50 и выходишь.</li><li><b>${BOARD.filter((s) => s.type === 'rail').map((s) => n(s.i)).join(', ')}</b> — «точки», аренда растёт с их количеством: $25 / $50 / $100 / $200.</li><li><b>${BOARD.filter((s) => s.type === 'util').map((s) => n(s.i)).join(', ')}</b> — аренда = кубики × 4 (× 10, если оба у одного хозяина).</li><li><b>${t('driveby')}</b> — попал под обстрел: пропускаешь следующий ход.</li><li><b>${t('carjack')}</b> — угнали тачку: прямиком ${t('hospitalIn')}.</li></ul>
     <h3>Постройки</h3><ul><li>Собрал всю цветовую группу — строишь хаты (до четырёх), пятая постройка — особняк. Строить нужно равномерно по группе.</li><li>Постройки продаются банку за полцены.</li></ul>
     <h3>${t('dn')} (залог)</h3><ul><li>Клетку без построек можно заложить за половину цены — аренда с неё не берётся. Выкуп: залог + 10%.</li></ul>
     <h3>Долги и банкротство</h3><ul><li>Не хватает денег — закладывай и продавай. Если выручить нужную сумму не получается, объявляешь банкротство: имущество уходит кредитору.</li></ul>

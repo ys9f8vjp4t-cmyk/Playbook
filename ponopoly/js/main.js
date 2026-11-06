@@ -133,7 +133,8 @@ function readSettings() {
 
 function startLocalFromSetup() {
   readSettings();
-  const players = app.setupPlayers.map((p, i) => ({ name: (p.name || '').trim() || (p.bot ? BOT_NAMES[i] : `Игрок ${i + 1}`), token: p.token, bot: p.bot, color: PLAYER_COLORS[i] }));
+  const fallback = botNames(app.setupSettings.lang);
+  const players = app.setupPlayers.map((p, i) => ({ name: (p.name || '').trim() || (p.bot ? (fallback.find((n) => !app.setupPlayers.some((q) => q.name === n)) || fallback[i]) : `Игрок ${i + 1}`), token: p.token, bot: p.bot, color: PLAYER_COLORS[i] }));
   if (players.some((p) => !p.bot)) setPref('name', players.find((p) => !p.bot).name);
   let st;
   try { st = createGame({ players, settings: app.setupSettings }); } catch (e) { toast(e.message, 'err'); return; }
@@ -173,6 +174,7 @@ async function afterChange(ev) {
   UI.renderStrip(app.st, $('#pstrip'), ctx, app.prevCash);
   UI.renderBoard(app.st, app.refs);
   UI.renderDock(app.st, $('#dock'), ctx, true);
+  document.querySelectorAll('.modal [data-act]').forEach((b) => { b.disabled = true; });
   const run = playEvents(ev);
   app.animating = run;
   await run;
@@ -362,7 +364,7 @@ function showGameMenu() {
     const b = e.target.closest('[data-m]'); if (!b) { if (e.target.closest('[data-close]')) closeModal(); return; }
     const m = b.dataset.m; closeModal();
     if (m === 'rules') { openModal(UI.rulesHtml(langOf(st)) + '<div class="actions"><button class="btn" data-close="1">Закрыть</button></div>', { kind: 'rules' }).addEventListener('click', (ev) => { if (ev.target.closest('[data-close]')) closeModal(); }); }
-    if (m === 'lang' && app.mode === 'local') { st.settings.lang = langOf(st) === 'ru' ? 'en' : 'ru'; setPref('lang', st.settings.lang); renameDefaultBots(st.players, st.settings.lang); sync(); persist(); toast(st.settings.lang === 'ru' ? 'Доска полностью по-русски' : 'Доска как в фильме'); }
+    if (m === 'lang' && app.mode === 'local') { st.settings.lang = langOf(st) === 'ru' ? 'en' : 'ru'; setPref('lang', st.settings.lang); renameDefaultBots(st.players, st.settings.lang); sync(); persist(); toast(st.settings.lang === 'ru' ? 'Доска полностью по-русски. Старые записи журнала остаются как были.' : 'Доска как в фильме. Старые записи журнала остаются как были.'); }
     if (m === 'fast') { setPref('fast', !getPref('fast', false)); toast(getPref('fast', false) ? 'Боты ходят быстро' : 'Боты ходят спокойно'); }
     if (m === 'surrender' && await confirmDialog(`${UI.pname(st, v)}, точно сдаёшься?`, 'Сдаюсь', true)) dispatch({ type: 'surrender', pid: v });
     if (m === 'leave') await leaveGamePrompt();
@@ -405,7 +407,8 @@ function onDock(act, pid) {
 function ensureOnline() {
   if (app.online) return app.online;
   const o = new Online();
-  o.on('joined', () => renderOnline());
+  o.on('joined', () => { renderOnline(); });
+  o.on('room', (room) => { if (room.host === o.you && !room.started && !o._langSent) { o._langSent = true; if ((room.settings.lang || 'en') !== prefLang()) o.settings({ lang: prefLang() }); } });
   o.on('room', (room) => { renderOnline(); if (room.started && app.mode !== 'online' && o.state) startGame('online', o.state); });
   o.on('state', ({ state, events }) => {
     const first = app.mode !== 'online' || !app.st;
@@ -519,6 +522,8 @@ async function boot() {
   // приглашение в комнату: ?room=CODE или start_param в Telegram
   const url = new URL(location.href);
   const code = startParam() || url.searchParams.get('room');
+  const saved = Online.savedSession();
+  if (code && saved && saved.code === String(code).toUpperCase()) { onlineRejoin(); return; }
   if (code && /^[A-Za-z]{4}$/.test(code)) {
     ensureOnline(); showScreen('online'); renderOnline();
     $('#online-code').value = code.toUpperCase();

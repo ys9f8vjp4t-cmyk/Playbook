@@ -32,12 +32,12 @@ export async function loadGame() {
         const keys = Array.from({ length: n }, (_, i) => `${KEY}_${i}`);
         const parts = await cloudGetMany(keys);
         const json = keys.map((k) => parts[k] || '').join('');
-        if (json) return JSON.parse(json);
+        if (json) { const st = JSON.parse(json); if (st && st.v === 2) return st; }
       }
     } catch (e) { console.warn('CloudStorage load failed', e); }
   }
   const store = ls();
-  try { const json = store && store.getItem(KEY); if (json) return JSON.parse(json); } catch {}
+  try { const json = store && store.getItem(KEY); if (json) { const st = JSON.parse(json); return st && st.v === 2 ? st : null; } } catch {}
   return null;
 }
 

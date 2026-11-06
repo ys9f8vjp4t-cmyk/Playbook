@@ -1,73 +1,89 @@
 // Po'Nopoly — board data, cards, tokens, localisation helpers.
+// The board follows the prop seen in the unrated cut of "Don't Be a Menace to South
+// Central While Drinking Your Juice in the Hood" (1996): 11 squares per side, 48 in all.
+// Squares marked `seen: true` are read directly from frames of the film (names, colour
+// bands, order along one side). The rest are reconstructed in the same spirit; see
+// README («Доска из фильма») for what is confirmed and what is a guess.
 import { RU } from './ru.js';
-// Names on the board follow the prop seen in "Don't Be a Menace to South Central
-// While Drinking Your Juice in the Hood" (1996): Watts, Roscoe's, Crenshaw, Oakland,
-// Echo Park, Alvarado, Florence, Pawn Shop, Nail Salon, Tax Evasion, Robbed,
-// Drive-By, No Chance, Community Service, Disconnect Notice. Squares not visible
-// in the film are filled in with LA neighbourhoods in the same spirit.
 
 export const GROUPS = {
-  brown:     { name: 'Коричневые', color: '#8d5524', text: '#fff' },
+  purple:    { name: 'Фиолетовые', color: '#8f3fa6', text: '#fff' },
   lightblue: { name: 'Голубые',    color: '#9fd3f3', text: '#0b2a3a' },
+  darkblue:  { name: 'Синие',      color: '#2436b8', text: '#fff' },
   pink:      { name: 'Розовые',    color: '#e4489a', text: '#fff' },
   orange:    { name: 'Оранжевые',  color: '#f39a2b', text: '#1b1200' },
   red:       { name: 'Красные',    color: '#e23b3b', text: '#fff' },
   yellow:    { name: 'Жёлтые',     color: '#f6e35b', text: '#2b2300' },
   green:     { name: 'Зелёные',    color: '#2fae62', text: '#fff' },
-  darkblue:  { name: 'Синие',      color: '#1f5fbf', text: '#fff' },
+  navy:      { name: 'Тёмно-синие', color: '#0b2a6b', text: '#fff' },
   rail:      { name: 'Точки',      color: '#2b2b2b', text: '#fff' },
   util:      { name: 'Салоны',     color: '#8a8f99', text: '#fff' },
 };
 
-// Square types: go, prop, chest (Community Service), chance (No Chance), tax,
-// rail (Pawn Shop & co.), util (Nail Salon / Barbershop), jail (County Hospital),
-// parking, gotojail (Drive-By).
+// Square types: go, prop, chest (Community Service), chance (No Chance), tax (Tax Evasion,
+// Robbed), rail (Pawn Shop & co.), util (Nail Salon / Barbershop), jail (County Hospital),
+// parking, driveby (skip a turn), gotojail (Car Jacking → County Hospital).
+const P = (i, name, short, group, price, rent, house, extra = {}) => ({ i, type: 'prop', name, short, group, price, rent, house, ...extra });
 export const BOARD = [
-  { i: 0,  type: 'go',       name: 'GO',            short: 'GO',        ru: 'Старт' },
-  { i: 1,  type: 'prop',     name: 'Watts',         short: 'Watts',     group: 'brown', price: 60,  rent: [2, 10, 30, 90, 160, 250], house: 50 },
-  { i: 2,  type: 'chest',    name: 'Community Service', short: 'Comm. Service', ru: 'Общественные работы' },
-  { i: 3,  type: 'prop',     name: "Roscoe's Chicken & Waffles", short: "Roscoe's", group: 'brown', price: 60, rent: [4, 20, 60, 180, 320, 450], house: 50 },
-  { i: 4,  type: 'tax',      name: 'Tax Evasion',   short: 'Tax Evasion', ru: 'Уклонение от налогов', amount: 200, percent: 10 },
-  { i: 5,  type: 'rail',     name: 'Pawn Shop',     short: 'Pawn Shop', ru: 'Ломбард', price: 200 },
-  { i: 6,  type: 'prop',     name: 'Crenshaw',      short: 'Cren\u00ADshaw',  group: 'lightblue', price: 100, rent: [6, 30, 90, 270, 400, 550], house: 50 },
-  { i: 7,  type: 'chance',   name: 'No Chance',     short: 'No Chance', ru: 'Без шансов' },
-  { i: 8,  type: 'prop',     name: 'Oakland',       short: 'Oakland',   group: 'lightblue', price: 100, rent: [6, 30, 90, 270, 400, 550], house: 50 },
-  { i: 9,  type: 'prop',     name: 'Slauson',       short: 'Slauson',   group: 'lightblue', price: 120, rent: [8, 40, 100, 300, 450, 600], house: 50 },
-  { i: 10, type: 'jail',     name: 'County Hospital', short: 'County Hospital', ru: 'Окружная больница' },
-  { i: 11, type: 'prop',     name: 'Echo Park',     short: 'Echo Park', group: 'pink', price: 140, rent: [10, 50, 150, 450, 625, 750], house: 100 },
-  { i: 12, type: 'util',     name: 'Nail Salon',    short: 'Nail Salon', ru: 'Маникюрный салон', price: 150 },
-  { i: 13, type: 'prop',     name: 'Alvarado',      short: 'Alva\u00ADrado',  group: 'pink', price: 140, rent: [10, 50, 150, 450, 625, 750], house: 100 },
-  { i: 14, type: 'prop',     name: 'Florence',      short: 'Flo\u00ADrence',  group: 'pink', price: 160, rent: [12, 60, 180, 500, 700, 900], house: 100 },
-  { i: 15, type: 'rail',     name: 'Liquor Store',  short: 'Liquor Store', ru: 'Ликёрка', price: 200 },
-  { i: 16, type: 'prop',     name: 'Normandie',     short: 'Norman\u00ADdie', group: 'orange', price: 180, rent: [14, 70, 200, 550, 750, 950], house: 100 },
-  { i: 17, type: 'chest',    name: 'Community Service', short: 'Comm. Service', ru: 'Общественные работы' },
-  { i: 18, type: 'prop',     name: 'Inglewood',     short: 'Ingle\u00ADwood', group: 'orange', price: 180, rent: [14, 70, 200, 550, 750, 950], house: 100 },
-  { i: 19, type: 'prop',     name: 'Compton',       short: 'Comp\u00ADton',   group: 'orange', price: 200, rent: [16, 80, 220, 600, 800, 1000], house: 100 },
-  { i: 20, type: 'parking',  name: 'Free Parking',  short: 'Free Parking', ru: 'Бесплатная парковка' },
-  { i: 21, type: 'prop',     name: 'Koreatown',     short: 'Korea\u00ADtown', group: 'red', price: 220, rent: [18, 90, 250, 700, 875, 1050], house: 150 },
-  { i: 22, type: 'chance',   name: 'No Chance',     short: 'No Chance', ru: 'Без шансов' },
-  { i: 23, type: 'prop',     name: 'Hollywood',     short: 'Holly\u00ADwood', group: 'red', price: 220, rent: [18, 90, 250, 700, 875, 1050], house: 150 },
-  { i: 24, type: 'prop',     name: 'Silver Lake',   short: 'Silver Lake', group: 'red', price: 240, rent: [20, 100, 300, 750, 925, 1100], house: 150 },
-  { i: 25, type: 'rail',     name: 'Swap Meet',     short: 'Swap Meet', ru: 'Барахолка', price: 200 },
-  { i: 26, type: 'prop',     name: 'Venice Beach',  short: 'Venice',    group: 'yellow', price: 260, rent: [22, 110, 330, 800, 975, 1150], house: 150 },
-  { i: 27, type: 'prop',     name: 'Santa Monica',  short: 'Santa Monica', group: 'yellow', price: 260, rent: [22, 110, 330, 800, 975, 1150], house: 150 },
-  { i: 28, type: 'util',     name: 'Barbershop',    short: 'Barber\u00ADshop', ru: 'Барбершоп', price: 150 },
-  { i: 29, type: 'prop',     name: 'Malibu',        short: 'Malibu',    group: 'yellow', price: 280, rent: [24, 120, 360, 850, 1025, 1200], house: 150 },
-  { i: 30, type: 'gotojail', name: 'Drive-By',      short: 'Drive-By',  ru: 'Пролётка' },
-  { i: 31, type: 'prop',     name: 'Culver City',   short: 'Culver City', group: 'green', price: 300, rent: [26, 130, 390, 900, 1100, 1275], house: 200 },
-  { i: 32, type: 'prop',     name: 'Westwood',      short: 'West\u00ADwood',  group: 'green', price: 300, rent: [26, 130, 390, 900, 1100, 1275], house: 200 },
-  { i: 33, type: 'chest',    name: 'Community Service', short: 'Comm. Service', ru: 'Общественные работы' },
-  { i: 34, type: 'prop',     name: 'Brentwood',     short: 'Brent\u00ADwood', group: 'green', price: 320, rent: [28, 150, 450, 1000, 1200, 1400], house: 200 },
-  { i: 35, type: 'rail',     name: 'Check Cashing', short: 'Check Cash\u00ADing', ru: 'Обнал чеков', price: 200 },
-  { i: 36, type: 'chance',   name: 'No Chance',     short: 'No Chance', ru: 'Без шансов' },
-  { i: 37, type: 'prop',     name: 'Baldwin Hills', short: 'Baldwin Hills', group: 'darkblue', price: 350, rent: [35, 175, 500, 1100, 1300, 1500], house: 200 },
-  { i: 38, type: 'tax',      name: 'Robbed',        short: 'Robbed',    ru: 'Ограбили', amount: 100 },
-  { i: 39, type: 'prop',     name: 'Beverly Hills', short: 'Beverly Hills', group: 'darkblue', price: 400, rent: [50, 200, 600, 1400, 1700, 2000], house: 200 },
+  // ---- side 1 (read from the film, in this order) ----
+  { i: 0,  type: 'go',       name: 'GO',              short: 'GO',               ru: 'Старт', seen: true },
+  P(1, 'Westchester', 'West­chester', 'lightblue', 100, [6, 30, 90, 270, 400, 550], 50, { seen: true }),
+  { i: 2,  type: 'chance',   name: 'No Chance',       short: 'No Chance',        seen: true },
+  P(3, 'Oakland', 'Oakland', 'lightblue', 120, [8, 40, 100, 300, 450, 600], 50, { seen: true }),
+  { i: 4,  type: 'tax',      name: 'Robbed',          short: 'Robbed',           amount: 100, seen: true },
+  { i: 5,  type: 'tax',      name: 'Tax Evasion',     short: 'Tax Evasion',      amount: 200, percent: 10, seen: true, sub: 'PAY 10% OR $200' },
+  P(6, 'Echo Park', 'Echo Park', 'darkblue', 140, [10, 50, 150, 450, 625, 750], 100, { seen: true }),
+  { i: 7,  type: 'chest',    name: 'Community Service', short: 'Community Service', seen: true },
+  P(8, 'Alvarado', 'Alva­rado', 'darkblue', 140, [10, 50, 150, 450, 625, 750], 100, { seen: true }),
+  P(9, 'Florence', 'Flo­rence', 'darkblue', 160, [12, 60, 180, 500, 700, 900], 100, { seen: true }),
+  { i: 10, type: 'rail',     name: 'Pawn Shop',       short: 'Pawn Shop',        price: 200, seen: true },
+  P(11, 'Normandie', 'Norman­die', 'darkblue', 160, [12, 60, 180, 500, 700, 900], 100, { seen: true }),
+  { i: 12, type: 'jail',     name: 'County Hospital', short: 'County Hospital',  seen: true },
+  // ---- side 2 (reconstructed) ----
+  P(13, 'Crenshaw', 'Cren­shaw', 'pink', 180, [14, 70, 200, 550, 750, 950], 100),
+  { i: 14, type: 'util',     name: 'Nail Salon',      short: 'Nail Salon',       price: 150 },
+  P(15, 'Slauson', 'Slauson', 'pink', 180, [14, 70, 200, 550, 750, 950], 100),
+  P(16, 'Inglewood', 'Ingle­wood', 'pink', 200, [16, 80, 220, 600, 800, 1000], 100),
+  { i: 17, type: 'rail',     name: 'Liquor Store',    short: 'Liquor Store',     price: 200 },
+  P(18, 'Compton', 'Comp­ton', 'orange', 220, [18, 90, 250, 700, 875, 1050], 150),
+  { i: 19, type: 'chance',   name: 'No Chance',       short: 'No Chance' },
+  P(20, 'Figueroa', 'Figue­roa', 'orange', 220, [18, 90, 250, 700, 875, 1050], 150),
+  P(21, 'Hoover', 'Hoover', 'orange', 240, [20, 100, 300, 750, 925, 1100], 150),
+  { i: 22, type: 'chest',    name: 'Community Service', short: 'Community Service' },
+  P(23, 'Lynwood', 'Lyn­wood', 'orange', 240, [20, 100, 300, 750, 925, 1100], 150),
+  { i: 24, type: 'parking',  name: 'Free Parking',    short: 'Free Parking' },
+  // ---- side 3 (reconstructed) ----
+  P(25, 'Koreatown', 'Korea­town', 'red', 260, [22, 110, 330, 800, 975, 1150], 150),
+  { i: 26, type: 'chance',   name: 'No Chance',       short: 'No Chance' },
+  P(27, 'Hollywood', 'Holly­wood', 'red', 260, [22, 110, 330, 800, 975, 1150], 150),
+  P(28, 'Silver Lake', 'Silver Lake', 'red', 280, [24, 120, 360, 850, 1025, 1200], 150),
+  { i: 29, type: 'rail',     name: 'Swap Meet',       short: 'Swap Meet',        price: 200 },
+  P(30, 'Venice Beach', 'Venice Beach', 'yellow', 300, [26, 130, 390, 900, 1100, 1275], 200),
+  P(31, 'Santa Monica', 'Santa Monica', 'yellow', 300, [26, 130, 390, 900, 1100, 1275], 200),
+  { i: 32, type: 'util',     name: 'Barbershop',      short: 'Barber­shop', price: 150 },
+  P(33, 'Malibu', 'Malibu', 'yellow', 320, [28, 150, 450, 1000, 1200, 1400], 200),
+  { i: 34, type: 'chest',    name: 'Community Service', short: 'Community Service' },
+  P(35, 'Long Beach', 'Long Beach', 'yellow', 320, [28, 150, 450, 1000, 1200, 1400], 200),
+  { i: 36, type: 'gotojail', name: 'Car Jacking',     short: 'Car Jacking',      seen: true },
+  // ---- side 4 (Drive-By, Roscoe's and Watts are read from the film) ----
+  P(37, 'Culver City', 'Culver City', 'green', 350, [35, 175, 500, 1100, 1300, 1500], 200),
+  P(38, 'Westwood', 'West­wood', 'green', 350, [35, 175, 500, 1100, 1300, 1500], 200),
+  { i: 39, type: 'chest',    name: 'Community Service', short: 'Community Service' },
+  P(40, 'Brentwood', 'Brent­wood', 'green', 375, [40, 190, 550, 1200, 1400, 1600], 200),
+  { i: 41, type: 'rail',     name: 'Check Cashing',   short: 'Check Cash­ing', price: 200 },
+  { i: 42, type: 'chance',   name: 'No Chance',       short: 'No Chance' },
+  P(43, 'Baldwin Hills', 'Baldwin Hills', 'navy', 400, [50, 200, 600, 1400, 1700, 2000], 250),
+  P(44, 'Beverly Hills', 'Beverly Hills', 'navy', 450, [60, 240, 700, 1500, 1850, 2200], 250),
+  { i: 45, type: 'driveby',  name: 'Drive-By',        short: 'Drive-By',         seen: true },
+  P(46, "Roscoe's Chicken & Waffles", "Roscoe's", 'purple', 60, [4, 20, 60, 180, 320, 450], 50, { seen: true }),
+  P(47, 'Watts', 'Watts', 'purple', 60, [2, 10, 30, 90, 160, 250], 50, { seen: true }),
 ];
 
+export const N = BOARD.length;           // 48
+export const SIDE = N / 4;               // 12 (corner + 11)
 export const GO_SALARY = 200;
 export const JAIL_FINE = 50;
-export const JAIL_POS = 10;
+export const JAIL_POS = BOARD.find((s) => s.type === 'jail').i; // 12
 export const RAIL_RENT = [25, 50, 100, 200];
 export const MAX_HOUSES = 5; // 5 = особняк (hotel)
 
@@ -86,12 +102,15 @@ export function groupOf(sq) {
   return null;
 }
 
+export const PROP_GROUPS = Object.keys(GROUPS).filter((g) => g !== 'rail' && g !== 'util');
+export const idxOf = (name) => { const s = BOARD.find((x) => x.name === name); if (!s) throw new Error('no square ' + name); return s.i; };
+
 // "No Chance" deck. fx kinds: go, move(to), util, rail, cash(a), jailcard, back(n),
 // jail, repairs(h, m), each(a)  — positive "each" = collect from every player.
 export const CHANCE = [
   { id: 'c1',  text: 'Беги на СТАРТ. Пособие пришло — получи $200.', fx: { k: 'go' } },
-  { id: 'c2',  text: 'Езжай в Compton. Если проходишь СТАРТ — получи $200.', fx: { k: 'move', to: 19 } },
-  { id: 'c3',  text: 'Езжай в Echo Park. Если проходишь СТАРТ — получи $200.', fx: { k: 'move', to: 11 } },
+  { id: 'c2',  text: 'Езжай в Compton. Если проходишь СТАРТ — получи $200.', fx: { k: 'move', to: 18 } },
+  { id: 'c3',  text: 'Езжай в Echo Park. Если проходишь СТАРТ — получи $200.', fx: { k: 'move', to: 6 } },
   { id: 'c4',  text: 'Езжай в ближайший салон (Nail Salon или Barbershop). Если он занят — брось кубики и заплати хозяину в 10 раз больше выпавшего.', fx: { k: 'util' } },
   { id: 'c5',  text: 'Езжай в ближайшую точку (Pawn Shop, Liquor Store, Swap Meet или Check Cashing). Если она занята — плати двойную аренду.', fx: { k: 'rail' } },
   { id: 'c6',  text: 'Дядя наконец вернул долг. Получи $50.', fx: { k: 'cash', a: 50 } },
@@ -100,8 +119,8 @@ export const CHANCE = [
   { id: 'c9',  text: 'Поймал шальную. Прямиком в County Hospital. СТАРТ не проходишь, $200 не получаешь.', fx: { k: 'jail' } },
   { id: 'c10', text: 'Облава на районе. Плати $25 за каждую хату и $100 за каждый особняк.', fx: { k: 'repairs', h: 25, m: 100 } },
   { id: 'c11', text: 'Штраф за музыку из лоурайдера. Плати $15.', fx: { k: 'cash', a: -15 } },
-  { id: 'c12', text: 'Прокатись до Pawn Shop. Если проходишь СТАРТ — получи $200.', fx: { k: 'move', to: 5 } },
-  { id: 'c13', text: 'Езжай в Beverly Hills. Посмотри, как живут люди.', fx: { k: 'move', to: 39 } },
+  { id: 'c12', text: 'Прокатись до Pawn Shop. Если проходишь СТАРТ — получи $200.', fx: { k: 'move', to: 10 } },
+  { id: 'c13', text: 'Езжай в Beverly Hills. Посмотри, как живут люди.', fx: { k: 'move', to: 44 } },
   { id: 'c14', text: 'Тебя выбрали OG района. Проставься: каждому игроку по $50.', fx: { k: 'each', a: -50 } },
   { id: 'c15', text: 'Страховая наконец выплатила за старую тачку. Получи $150.', fx: { k: 'cash', a: 150 } },
   { id: 'c16', text: 'Выиграл баттл на районе. Получи $100.', fx: { k: 'cash', a: 100 } },
@@ -129,6 +148,7 @@ export const CHEST = [
 
 export const CARD_BY_ID = Object.fromEntries([...CHANCE, ...CHEST].map((c) => [c.id, c]));
 
+// Gold-coloured tokens like the ones on the prop (a lowrider, a pager, a bullet casing…).
 export const TOKENS = [
   { id: 'lowrider', emoji: '🚗', name: 'Лоурайдер' },
   { id: 'pager',    emoji: '📟', name: 'Пейджер' },
@@ -155,12 +175,13 @@ export const DEFAULT_SETTINGS = {
 // ---------- localisation ----------
 // Термины в режиме «как в фильме» (интерфейс русский, названия — с реквизита).
 export const TERMS_EN = {
-  hospital: 'County Hospital', hospitalShort: 'County Hospital', hospitalIn: 'в County Hospital', hospitalFrom: 'из County Hospital',
+  hospital: 'County Hospital', hospitalShort: 'County Hospital', hospitalIn: 'в County Hospital', hospitalFrom: 'из County Hospital', hospitalAt: 'в County Hospital',
   visiting: 'навещает кореша в County Hospital', parking: 'Free Parking', parkingShort: 'Free Parking', go: 'GO',
-  chance: 'NO CHANCE', chanceShort: 'No Chance', chest: 'COMMUNITY SERVICE', chestShort: 'Comm. Service',
+  chance: 'NO CHANCE', chanceShort: 'No Chance', chest: 'COMMUNITY SERVICE', chestShort: 'Community Service',
   dn: 'Disconnect Notice', dnStamp: 'DISCONNECT NOTICE', dnUnder: 'под Disconnect Notice',
   tax: 'Tax Evasion', taxShort: 'Tax Evasion', robbed: 'Robbed', robbedShort: 'Robbed',
-  driveby: 'Drive-By', drivebyShort: 'Drive-By', drivebyEvent: 'попал под Drive-By', og: 'OG района',
+  driveby: 'Drive-By', drivebyShort: 'Drive-By', drivebyEvent: 'попал под Drive-By и пропускает следующий ход',
+  carjack: 'Car Jacking', carjackEvent: 'угнали тачку — Car Jacking', og: 'OG района',
   logo: "PO'NOPOLY", logoSub: 'by Darker Brothers',
 };
 export const LANGS = ['en', 'ru'];
