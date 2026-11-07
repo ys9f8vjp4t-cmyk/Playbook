@@ -2,11 +2,15 @@
 import { BOARD, N, SIDE, GROUPS, TOKENS, PLAYER_COLORS, RAIL_RENT, MAX_HOUSES, JAIL_FINE, CARD_BY_ID, groupOf, sqName, sqShort, term, cardText, deckName, langOf } from './data.js';
 import { PHASE, whoActs, current, legalActions, netWorth, liquidValue, ownedBy, checks, mortgageValue, unmortgageCost, rentFor, ownsGroup, describeTrade } from './engine.js';
 import { haptic } from './telegram.js';
+import { FIGURES } from './figures.js';
 
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const money = (n) => `$${Number(n).toLocaleString('ru-RU')}`;
 export const tokenOf = (id) => TOKENS.find((t) => t.id === id) || TOKENS[0];
+// Фигурка игрока: inline SVG из assets/figures, иначе эмодзи-заглушка.
+export const figureHtml = (tokenId) => FIGURES[tokenId] ? `<div class="fig">${FIGURES[tokenId]}</div>` : `<div class="fig fig-emoji"><span>${tokenOf(tokenId).emoji}</span></div>`;
+export const tokenFace = (tokenId) => `<span class="tok">${figureHtml(tokenId)}</span>`;
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const reduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -103,12 +107,12 @@ export function buildBoard(boardEl, lang = 'en') {
     <div class="fineprint">${lang === 'ru' ? 'Пародийная настолка по мотивам фильма «Не грози Южному Централу». Любое сходство с настоящими районами — не случайность.' : 'A parody board game inspired by the hood. Any resemblance to real neighborhoods is entirely intentional.'}</div>
     <div class="deck chance"><span>${esc(term(lang, 'chance'))}</span></div>
     <div class="deck chest"><span>${esc(term(lang, 'chest'))}</span></div>
-    <div class="center-bottom"><div class="dice" id="dice"><div class="die" data-v="0">${'<span></span>'.repeat(9)}</div><div class="die" data-v="0">${'<span></span>'.repeat(9)}</div></div><div class="status" id="board-status">Бросай кубики</div></div>`;
+    <div class="center-bottom"><div class="dice" id="dice">${dieHtml()}${dieHtml()}</div><div class="status" id="board-status">Бросай кубики</div></div>`;
   boardEl.appendChild(center);
   const tokens = document.createElement('div');
   tokens.className = 'tokens'; tokens.id = 'tokens';
   boardEl.appendChild(tokens);
-  return { boardEl, cells, center, tokens, dice: center.querySelectorAll('.die'), status: $('#board-status', center), lang };
+  return { boardEl, cells, center, tokens, dice: center.querySelectorAll('.die3d'), status: $('#board-status', center), lang };
 }
 
 // Позиция клетки в сетке (SIDE клеток на сторону вместе с углом). GO — правый нижний угол,
@@ -120,6 +124,19 @@ function gridPos(i) {
   if (side === 1) return k === 0 ? { row: G, col: 1, side: 'corner' } : { row: G - k, col: 1, side: 'side-left' };
   if (side === 2) return k === 0 ? { row: 1, col: 1, side: 'corner' } : { row: 1, col: 1 + k, side: 'side-top' };
   return k === 0 ? { row: 1, col: G, side: 'corner' } : { row: 1 + k, col: G, side: 'side-right' };
+}
+
+// Кубик как настоящий: шесть граней, крутится в 3D и ложится нужной гранью вверх.
+function dieHtml() {
+  const face = (v) => `<div class="face" data-f="${v}"><div class="pips" data-v="${v}">${'<span></span>'.repeat(9)}</div></div>`;
+  return `<div class="die3d" data-v="0" data-spin="0">${[1, 2, 3, 4, 5, 6].map(face).join('')}</div>`;
+}
+const DIE_ROT = { 1: [0, 0], 2: [0, -90], 3: [-90, 0], 4: [90, 0], 5: [0, 90], 6: [0, 180] };
+export function setDie(el, v, spin = false) {
+  const [x, y] = DIE_ROT[v] || [0, 0];
+  const n = spin ? (Number(el.dataset.spin || 0) + 1) : Number(el.dataset.spin || 0);
+  el.dataset.spin = n; el.dataset.v = v;
+  el.style.transform = `rotateX(${720 * n + x}deg) rotateY(${720 * n + y}deg)`;
 }
 
 function mascotSvg() {
@@ -151,7 +168,7 @@ export function renderBoard(st, refs) {
       band.innerHTML = ps.houses === MAX_HOUSES ? '<i class="house hotel"></i>' : '<i class="house"></i>'.repeat(ps.houses);
     }
   }
-  if (st.dice) refs.dice.forEach((d, i) => d.dataset.v = st.dice[i]);
+  if (st.dice) refs.dice.forEach((d, i) => { if (Number(d.dataset.v) !== st.dice[i]) setDie(d, st.dice[i]); });
 }
 
 export function highlightCell(refs, idx) {
@@ -164,14 +181,15 @@ export function ensureTokens(st, refs) {
   const layer = refs.tokens;
   const seen = new Set();
   for (const p of st.players) {
-    let el = layer.querySelector(`[data-pid="${p.id}"]`);
+    let el = layer.querySelector(`.tok[data-pid="${p.id}"]`);
     if (!el) {
+      const sh = document.createElement('div'); sh.className = 'tokshadow'; sh.dataset.pid = p.id; layer.appendChild(sh);
       el = document.createElement('div');
-      el.className = 'tok'; el.dataset.pid = p.id;
-      el.textContent = tokenOf(p.token).emoji;
+      el.className = 'tok'; el.dataset.pid = p.id; el.dataset.token = p.token;
+      el.innerHTML = figureHtml(p.token);
       el.title = p.name;
       layer.appendChild(el);
-    }
+    } else if (el.dataset.token !== p.token) { el.dataset.token = p.token; el.innerHTML = figureHtml(p.token); }
     el.style.setProperty('--pc', playerColor(st, p.id));
     el.classList.toggle('out', !!p.bankrupt);
     el.classList.toggle('cur', !p.bankrupt && current(st).id === p.id && st.phase !== PHASE.OVER);
@@ -180,17 +198,16 @@ export function ensureTokens(st, refs) {
   for (const el of [...layer.children]) if (!seen.has(el.dataset.pid)) el.remove();
 }
 
+// Центр клетки в координатах доски (offset-значения не зависят от 3D-трансформаций).
 function cellCenter(refs, idx) {
-  const b = refs.boardEl.getBoundingClientRect();
-  const c = refs.cells[idx].getBoundingClientRect();
-  return { x: c.left - b.left + c.width / 2, y: c.top - b.top + c.height / 2, w: c.width, h: c.height };
+  const c = refs.cells[idx];
+  return { x: c.offsetLeft + c.offsetWidth / 2, y: c.offsetTop + c.offsetHeight / 2, w: c.offsetWidth, h: c.offsetHeight };
 }
 
 // overrides: {pid: idx} — временная позиция во время анимации
 export function positionTokens(st, refs, overrides = {}) {
   ensureTokens(st, refs);
-  const tokEl = refs.tokens.querySelector('.tok');
-  const size = tokEl ? tokEl.getBoundingClientRect().width || 20 : 20;
+  const unit = refs.boardEl.offsetWidth / 14.1;
   const groups = {};
   for (const p of st.players) {
     const idx = overrides[p.id] != null ? overrides[p.id] : p.pos;
@@ -198,19 +215,18 @@ export function positionTokens(st, refs, overrides = {}) {
   }
   for (const [idx, ps] of Object.entries(groups)) {
     const c = cellCenter(refs, Number(idx));
-    const sq = BOARD[Number(idx)];
-    const vertical = gridPos(sq.i).side === 'side-bottom' || gridPos(sq.i).side === 'side-top';
+    const n = ps.length;
     ps.forEach((p, k) => {
-      const el = refs.tokens.querySelector(`[data-pid="${p.id}"]`);
+      const el = refs.tokens.querySelector(`.tok[data-pid="${p.id}"]`);
+      const sh = refs.tokens.querySelector(`.tokshadow[data-pid="${p.id}"]`);
       if (!el) return;
-      const n = ps.length;
-      let dx = 0, dy = 0;
-      if (n > 1) {
-        const step = size * 0.55;
-        if (vertical) { dy = (k - (n - 1) / 2) * step; dx = (k % 2 ? 1 : -1) * size * 0.18; }
-        else { dx = (k - (n - 1) / 2) * step; dy = (k % 2 ? 1 : -1) * size * 0.18; }
-      }
-      el.style.transform = `translate(${c.x - size / 2 + dx}px, ${c.y - size / 2 + dy}px)`;
+      const w = el.offsetWidth || unit, h = el.offsetHeight || unit * 1.5;
+      const dx = n > 1 ? (k - (n - 1) / 2) * unit * 0.42 : 0;
+      const dy = n > 1 ? (k % 2 ? 1 : -1) * unit * 0.12 : 0;
+      const bx = c.x + dx, by = c.y + unit * 0.25 + dy; // точка опоры — чуть ниже центра клетки
+      el.style.transform = `translate(${bx - w / 2}px, ${by - h}px) rotateX(calc(var(--tilt, 0deg) * -1))`;
+      el.style.zIndex = String(10 + Math.round(by));
+      if (sh) sh.style.transform = `translate(${bx - unit * 0.35}px, ${by - unit * 0.12}px)`;
     });
   }
 }
@@ -235,8 +251,8 @@ export async function animateMove(st, refs, ev) {
 }
 
 export async function animateDice(refs, dice) {
-  refs.dice.forEach((d, i) => { d.classList.remove('rolling'); void d.offsetWidth; d.classList.add('rolling'); d.dataset.v = dice[i]; });
-  if (!reduced()) await sleep(450);
+  refs.dice.forEach((d, i) => setDie(d, dice[i], !reduced()));
+  if (!reduced()) await sleep(900);
 }
 
 // ---------- player strip ----------
@@ -433,7 +449,7 @@ export function taxHtml(st) {
   const p = current(st);
   const sq = BOARD[p.pos];
   const pct = Math.floor(netWorth(st, p.id) * sq.percent / 100);
-  return `<h2>${esc(term(st, 'tax'))}</h2><div class="sub">Налоговая всё-таки нашла ${esc(p.name)}. Общая стоимость имущества: ${money(netWorth(st, p.id))}.</div>
+  return `<h2>${esc(term(st, 'tax'))}</h2><div class="sub">Налоговая всё-таки добралась до игрока ${esc(p.name)}. Общая стоимость имущества: ${money(netWorth(st, p.id))}.</div>
     <div class="actions"><button class="btn btn-primary" data-act="tax" data-mode="flat">Заплатить ${money(sq.amount)}</button><button class="btn ${pct < sq.amount ? 'btn-gold' : ''}" data-act="tax" data-mode="percent">Заплатить ${sq.percent}% = ${money(pct)}</button></div>`;
 }
 

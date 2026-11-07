@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import { createGame, applyAction, PHASE, whoActs, EngineError } from '../js/engine.js';
 import { nextBotAction, botDelay } from '../js/bot.js';
+import { applyGameResult, sortedRatings } from '../js/rating.js';
 import { TOKENS, BOT_NAMES, DEFAULT_SETTINGS, PLAYER_COLORS, LANGS, botNames } from '../js/data.js';
 import { RU } from '../js/ru.js';
 
@@ -15,12 +16,24 @@ const PORT = Number(process.env.PORT) || 8080;
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BOT_SPEED = Number(process.env.BOT_SPEED || 1); // множитель задержек ботов (0 — мгновенно, для тестов)
 const DISCONNECT_GRACE_MS = Number(process.env.DISCONNECT_GRACE_MS || 120000);
+const RATINGS_FILE = process.env.RATINGS_FILE || path.join(path.dirname(fileURLToPath(import.meta.url)), 'data', 'ratings.json');
+let ratings = {};
+try { ratings = JSON.parse(fs.readFileSync(RATINGS_FILE, 'utf8')); } catch { ratings = {}; }
+function saveRatings() { try { fs.mkdirSync(path.dirname(RATINGS_FILE), { recursive: true }); fs.writeFileSync(RATINGS_FILE, JSON.stringify(ratings)); } catch (e) { console.error('ratings save failed', e.message); } }
+function rateRoom(room) {
+  if (!room.state || room.state.phase !== PHASE.OVER || room.rated) return;
+  room.rated = true;
+  applyGameResult(ratings, { ...room.state, players: room.state.players.map((p) => ({ ...p, uid: (room.players.find((q) => q.id === p.id) || {}).uid })) });
+  saveRatings();
+  broadcast(room, { t: 'ratings', list: sortedRatings(ratings).slice(0, 50) });
+}
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2' };
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x');
   if (url.pathname === '/health') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ ok: true, rooms: rooms.size })); return; }
+  if (url.pathname === '/ratings') { res.writeHead(200, { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'cache-control': 'no-store' }); res.end(JSON.stringify(sortedRatings(ratings).slice(0, 100))); return; }
   let p = decodeURIComponent(url.pathname);
   if (p === '/') p = '/index.html';
   const file = path.normalize(path.join(ROOT, p));
@@ -76,6 +89,7 @@ function runBots(room) {
     try {
       const ev = applyAction(room.state, a);
       broadcastState(room, ev);
+      rateRoom(room);
     } catch (e) {
       console.error('bot action failed', a, e.message);
       // чтобы игра не зависла, бот сдаётся
@@ -150,11 +164,13 @@ function requireHost(ws) { const room = requireRoom(ws); if (room.hostId !== ws.
 function handle(ws, msg) {
   switch (msg.t) {
     case 'ping': send(ws, { t: 'pong' }); return;
+    case 'ratings': send(ws, { t: 'ratings', list: sortedRatings(ratings).slice(0, 50) }); return;
     case 'create': {
       if (ws.room) throw new EngineError('Вы уже в комнате');
       const room = { code: newCode(), hostId: null, players: [], settings: { ...DEFAULT_SETTINGS }, state: null, seq: 0, botTimer: null, createdAt: Date.now(), lastActive: Date.now() };
       rooms.set(room.code, room);
       const p = addPlayer(room, { name: cleanName(msg.name), token: msg.token, ws });
+      if (msg.uid) p.uid = String(msg.uid).slice(0, 32);
       room.hostId = p.id; ws.room = room; ws.pid = p.id;
       send(ws, { t: 'joined', code: room.code, pid: p.id, secret: p.secret });
       broadcastRoom(room);
@@ -167,6 +183,7 @@ function handle(ws, msg) {
       if (room.state) throw new EngineError('Игра уже идёт');
       if (room.players.length >= 6) throw new EngineError('Комната заполнена');
       const p = addPlayer(room, { name: cleanName(msg.name), token: msg.token, ws });
+      if (msg.uid) p.uid = String(msg.uid).slice(0, 32);
       ws.room = room; ws.pid = p.id; touch(room);
       send(ws, { t: 'joined', code: room.code, pid: p.id, secret: p.secret });
       broadcastRoom(room);
@@ -246,6 +263,7 @@ function handle(ws, msg) {
       const ev = applyAction(room.state, action);
       touch(room);
       broadcastState(room, ev);
+      rateRoom(room);
       runBots(room);
       return;
     }

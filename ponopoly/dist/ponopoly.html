@@ -151,21 +151,20 @@ a { color: var(--accent); }
 
 /* ---------- game screen ---------- */
 #screen-game { height: 100%; }
-#screen-game.active { display: grid; grid-template-rows: auto 1fr auto auto; grid-template-areas: "strip" "board" "feed" "dock"; height: 100%; min-height: 0; }
+#screen-game.active { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr auto auto; grid-template-areas: "strip" "board" "feed" "dock"; height: 100%; min-height: 0; overflow: hidden; }
 .pstrip { grid-area: strip; display: flex; gap: 8px; overflow-x: auto; padding: 8px max(12px, env(safe-area-inset-left, 0px)) 6px; scrollbar-width: none; }
 .pstrip::-webkit-scrollbar { display: none; }
 .pchip { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 6px 10px 6px 6px; border-radius: 999px; background: var(--surface); border: 2px solid var(--line); cursor: pointer; min-width: 0; }
 .pchip.cur { border-color: var(--gold); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 35%, transparent); }
 .pchip.out { opacity: .4; }
 .pchip.me .pname::after { content: ' (ты)'; color: var(--muted); font-weight: 400; }
-.pchip .tok { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; background: radial-gradient(circle at 35% 30%, #fff1b0, var(--gold) 70%); border: 3px solid var(--pc, var(--line)); box-shadow: 0 0 0 2px #fff; }
 .pchip .pname { font-weight: 600; font-size: 13px; white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
 .pchip .pcash { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pchip .pcash.flash-up { color: var(--accent); } .pchip .pcash.flash-down { color: var(--danger); }
 .pchip .pjail { font-size: 12px; }
 .pchip .pbot { font-size: 11px; color: var(--muted); }
 
-.board-area { grid-area: board; display: flex; align-items: center; justify-content: center; min-height: 0; padding: 4px; overflow: hidden; }
+.board-area { grid-area: board; display: flex; align-items: center; justify-content: center; min-height: 0; min-width: 0; width: 100%; padding: 4px; overflow: hidden; }
 .feed { grid-area: feed; width: var(--board-size); max-width: 100%; margin: 0 auto; font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 3px; padding: 4px 8px 6px; max-height: 4.2em; overflow: hidden; min-width: 0; }
 .feed div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .feed div:first-child { color: var(--fg); font-weight: 500; }
@@ -229,26 +228,41 @@ a { color: var(--accent); }
 .center .deck.chest { right: calc(var(--unit) * 0.8); bottom: calc(var(--unit) * 2.6); }
 .center .center-bottom { position: absolute; left: calc(var(--unit) * 0.35); right: calc(var(--unit) * 0.35); bottom: calc(var(--unit) * 0.3); display: flex; align-items: center; gap: calc(var(--unit) * 0.3); }
 .center .status { flex: 1 1 auto; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-align: left; font-family: var(--font-ui); font-size: calc(var(--unit) * 0.27); color: var(--board-line); background: rgba(255, 255, 255, .6); border-radius: 8px; padding: 4px 8px; line-height: 1.25; }
-.dice { flex: 0 0 auto; display: flex; gap: calc(var(--unit) * 0.18); }
-.die { width: calc(var(--unit) * 0.85); height: calc(var(--unit) * 0.85); border-radius: 18%; background: #d8242a; box-shadow: inset -2px -3px 0 rgba(0, 0, 0, .25), 2px 3px 4px rgba(0, 0, 0, .3); display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); padding: 12%; gap: 2%; }
-.die span { border-radius: 50%; background: #fff; opacity: 0; }
-.die[data-v="1"] span:nth-child(5), .die[data-v="3"] span:nth-child(5), .die[data-v="5"] span:nth-child(5) { opacity: 1; }
-.die[data-v="2"] span:nth-child(3), .die[data-v="2"] span:nth-child(7), .die[data-v="3"] span:nth-child(3), .die[data-v="3"] span:nth-child(7),
-.die[data-v="4"] span:nth-child(1), .die[data-v="4"] span:nth-child(3), .die[data-v="4"] span:nth-child(7), .die[data-v="4"] span:nth-child(9),
-.die[data-v="5"] span:nth-child(1), .die[data-v="5"] span:nth-child(3), .die[data-v="5"] span:nth-child(7), .die[data-v="5"] span:nth-child(9),
-.die[data-v="6"] span:nth-child(1), .die[data-v="6"] span:nth-child(3), .die[data-v="6"] span:nth-child(4), .die[data-v="6"] span:nth-child(6), .die[data-v="6"] span:nth-child(7), .die[data-v="6"] span:nth-child(9) { opacity: 1; }
-.die.rolling { animation: roll .5s ease-out; }
-@keyframes roll { 0% { transform: rotate(0) scale(.8); } 50% { transform: rotate(180deg) scale(1.15); } 100% { transform: rotate(360deg) scale(1); } }
+.dice { flex: 0 0 auto; display: flex; gap: calc(var(--unit) * 0.3); perspective: 600px; }
+.die3d { --d: calc(var(--unit) * 0.85); width: var(--d); height: var(--d); position: relative; transform-style: preserve-3d; transition: transform 1s cubic-bezier(.2, .9, .3, 1); }
+.die3d .face { position: absolute; inset: 0; background: #d8242a; border-radius: 16%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .25); backface-visibility: hidden; }
+.die3d .face[data-f="1"] { transform: translateZ(calc(var(--d) / 2)); }
+.die3d .face[data-f="6"] { transform: rotateY(180deg) translateZ(calc(var(--d) / 2)); }
+.die3d .face[data-f="2"] { transform: rotateY(90deg) translateZ(calc(var(--d) / 2)); }
+.die3d .face[data-f="5"] { transform: rotateY(-90deg) translateZ(calc(var(--d) / 2)); }
+.die3d .face[data-f="3"] { transform: rotateX(90deg) translateZ(calc(var(--d) / 2)); }
+.die3d .face[data-f="4"] { transform: rotateX(-90deg) translateZ(calc(var(--d) / 2)); }
+.pips { position: absolute; inset: 0; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); padding: 14%; gap: 4%; }
+.pips span { border-radius: 50%; background: #fff; opacity: 0; }
+.pips[data-v="1"] span:nth-child(5), .pips[data-v="3"] span:nth-child(5), .pips[data-v="5"] span:nth-child(5) { opacity: 1; }
+.pips[data-v="2"] span:nth-child(3), .pips[data-v="2"] span:nth-child(7), .pips[data-v="3"] span:nth-child(3), .pips[data-v="3"] span:nth-child(7),
+.pips[data-v="4"] span:nth-child(1), .pips[data-v="4"] span:nth-child(3), .pips[data-v="4"] span:nth-child(7), .pips[data-v="4"] span:nth-child(9),
+.pips[data-v="5"] span:nth-child(1), .pips[data-v="5"] span:nth-child(3), .pips[data-v="5"] span:nth-child(7), .pips[data-v="5"] span:nth-child(9),
+.pips[data-v="6"] span:nth-child(1), .pips[data-v="6"] span:nth-child(3), .pips[data-v="6"] span:nth-child(4), .pips[data-v="6"] span:nth-child(6), .pips[data-v="6"] span:nth-child(7), .pips[data-v="6"] span:nth-child(9) { opacity: 1; }
 
 .tokens { position: absolute; inset: 0; pointer-events: none; }
-.tokens .tok { --tok: clamp(26px, calc(var(--unit) * 0.78), 46px); position: absolute; left: 0; top: 0; width: var(--tok); height: var(--tok); border-radius: 50%; display: grid; place-items: center; font-size: calc(var(--tok) * 0.56); line-height: 1; background: radial-gradient(circle at 35% 30%, #fff1b0, var(--gold) 70%); border: 3px solid var(--pc, #333); box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(0, 0, 0, .55); transition: transform .28s cubic-bezier(.3, .8, .4, 1.1); will-change: transform; z-index: 2; }
+.tokens .tok { --tok: clamp(26px, calc(var(--unit) * 1.05), 64px); position: absolute; left: 0; top: 0; width: var(--tok); height: calc(var(--tok) * 1.5); transform-origin: 50% 100%; transition: transform .28s cubic-bezier(.3, .8, .4, 1.1); will-change: transform; z-index: 2; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .45)); }
+.tokens .tok .fig, .tokens .tok .fig svg { width: 100%; height: 100%; display: block; }
+.tokens .tok .fig-emoji { display: grid; place-items: center; font-size: calc(var(--tok) * .7); background: radial-gradient(circle at 35% 30%, #fff1b0, var(--gold) 70%); border-radius: 50%; width: var(--tok); height: var(--tok); margin-top: calc(var(--tok) * .5); border: 3px solid var(--pc, #333); }
 .tokens .tok.hop { animation: hop .28s ease-out; }
-@keyframes hop { 50% { scale: 1.25; } }
-.tokens .tok.cur { z-index: 3; }
-.tokens .tok.cur::after { content: ''; position: absolute; inset: -7px; border-radius: 50%; border: 2px solid var(--pc, #333); animation: ring 1.4s ease-out infinite; }
-@keyframes ring { 0% { transform: scale(.8); opacity: .9; } 100% { transform: scale(1.35); opacity: 0; } }
+@keyframes hop { 50% { transform: translateY(-6px); } }
+.tokens .tok.cur .fig { animation: bob 1.6s ease-in-out infinite; }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5%); } }
 .tokens .tok.out { opacity: .25; filter: grayscale(1); }
-@media (prefers-reduced-motion: reduce) { .tokens .tok { transition: none; } .die.rolling { animation: none; } .tokens .tok.hop { animation: none; } .tokens .tok.cur::after { animation: none; } }
+.tokens .tokshadow { position: absolute; left: 0; top: 0; width: calc(var(--unit) * 0.7); height: calc(var(--unit) * 0.24); border-radius: 50%; background: radial-gradient(ellipse, rgba(0, 0, 0, .45), rgba(0, 0, 0, 0) 70%); pointer-events: none; transition: transform .28s cubic-bezier(.3, .8, .4, 1.1); }
+.tokens .tok.cur + .tokshadow, .tokens .tok.cur ~ .tokshadow[data-pid] { }
+.pchip .tok, .item .tok { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; overflow: hidden; background: radial-gradient(circle at 35% 30%, #fff1b0, var(--gold) 70%); border: 3px solid var(--pc, var(--line)); box-shadow: 0 0 0 2px #fff; flex: 0 0 auto; }
+.pchip .tok .fig, .item .tok .fig { width: 24px; height: 36px; margin-top: 6px; }
+.pchip .tok .fig svg, .item .tok .fig svg { width: 100%; height: 100%; display: block; }
+.pchip .tok .fig-emoji, .item .tok .fig-emoji { width: auto; height: auto; margin: 0; background: none; border: 0; font-size: 17px; }
+.token-pick .fig { width: 26px; height: 39px; margin-top: 8px; } .token-pick .fig svg { width: 100%; height: 100%; display: block; } .token-pick .fig-emoji { margin: 0; font-size: 22px; }
+.token-grid.figs button { min-height: 96px; gap: 4px; } .token-grid.figs .fig { width: 40px; height: 60px; } .token-grid.figs .fig svg { width: 100%; height: 100%; display: block; } .token-grid.figs .fig-emoji { font-size: 28px; }
+@media (prefers-reduced-motion: reduce) { .tokens .tok { transition: none; } .tokens .tok.hop { animation: none; } .tokens .tok.cur .fig { animation: none; } .die3d { transition: none !important; } }
 
 .dock { grid-area: dock; background: var(--surface); border-top: 1px solid var(--line); padding: 8px max(12px, env(safe-area-inset-left, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 8px; }
 .dock .status-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 14px; }
@@ -264,7 +278,7 @@ a { color: var(--accent); }
 
 /* планшет и десктоп в альбомной ориентации: доска слева, панель справа */
 @media (min-width: 900px) and (orientation: landscape) {
-  #screen-game.active { grid-template-columns: 1fr minmax(320px, 380px); grid-template-rows: auto 1fr auto; grid-template-areas: "board strip" "board feed" "board dock"; }
+  #screen-game.active { grid-template-columns: minmax(0, 1fr) minmax(320px, 380px); grid-template-rows: auto 1fr auto; grid-template-areas: "board strip" "board feed" "board dock"; }
   .pstrip { flex-wrap: wrap; overflow: visible; padding: 12px; align-content: flex-start; border-left: 1px solid var(--line); background: var(--surface); }
   .feed { width: auto; max-width: none; margin: 0; max-height: none; overflow: auto; font-size: 14px; padding: 4px 16px; border-left: 1px solid var(--line); background: var(--surface); gap: 6px; }
   .feed div { white-space: normal; padding: 4px 8px; border-left: 3px solid var(--line); border-radius: 0 6px 6px 0; }
@@ -362,6 +376,50 @@ a { color: var(--accent); }
 :root[data-lang="ru"] .cell .ico.q { font-size: calc(var(--unit) * 0.5); }
 :root[data-lang="ru"] .big-card .kind { font-size: 22px; }
 
+/* ---------- 3D-вид: доска под наклоном, фишки стоят, кубики крутятся ---------- */
+.view-3d { --board-size: min(calc(100vw - 16px), calc((100vh - 300px) * 1.45), 980px); }
+.view-3d .board-area { perspective: calc(var(--board-size) * 2.2); perspective-origin: 50% 20%; overflow: hidden; align-items: center; padding: 0; }
+.view-3d .board { --tilt: 46deg; transform: rotateX(var(--tilt)) scale(.94); transform-style: preserve-3d; box-shadow: none; border-color: #0b1220; border-width: 2px; }
+.view-3d .board::before { content: ''; position: absolute; left: -2px; right: -2px; bottom: -2px; height: calc(var(--unit) * 0.5); background: linear-gradient(#2b4160, #0b1522); transform-origin: top center; transform: rotateX(-90deg); border-radius: 0 0 6px 6px; }
+.view-3d .cell { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .45), inset 0 -2px 0 rgba(0, 0, 0, .08); }
+.view-3d .cell .band { box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
+.view-3d .cell .house { box-shadow: 0 2px 0 #0b4d1c; } .view-3d .cell .house.hotel { box-shadow: 0 2px 0 #6e0c0e; }
+.view-3d .tokens { transform-style: preserve-3d; }
+.view-3d .feed { width: 100%; max-width: 100%; }
+.view-3d .board-area { contain: paint; }
+.view-3d .tokens .tok { --tok: clamp(30px, calc(var(--unit) * 1.15), 72px); filter: drop-shadow(0 3px 2px rgba(0, 0, 0, .35)); }
+.view-3d .center .mascot { transform: translateZ(1px); }
+@media (min-width: 900px) and (orientation: landscape) { .view-3d { --board-size: min(calc((100vh - 24px) * 1.35), calc(100vw - 420px), 1100px); } }
+
+/* ---------- аркадный стиль интерфейса ---------- */
+body.arcade { --bg: #0a1430; --surface: #142352; --fg: #f3f6ff; --muted: #a9b8dd; --line: #2d4280; --accent: #ffb703; --accent-fg: #221600; --gold: #ffcc33; --gold-deep: #b57a00; --shadow: 0 12px 30px rgba(0, 0, 0, .5); color-scheme: dark; background: radial-gradient(120% 70% at 50% 0%, #22468f, #0a1430 70%) fixed; }
+body.arcade .btn { border-color: #2d4280; background: linear-gradient(#1f3677, #152a60); color: #fff; box-shadow: 0 3px 0 #0b1a45; }
+body.arcade .btn-primary, body.arcade .btn-gold { background: linear-gradient(#ffe066, #ffb300 55%, #f29900); color: #241700; border: 1px solid #c98500; border-bottom: 4px solid #a06400; box-shadow: 0 6px 16px rgba(0, 0, 0, .4); font-weight: 800; letter-spacing: .02em; text-shadow: 0 1px 0 rgba(255, 255, 255, .5); }
+body.arcade .btn-danger { background: linear-gradient(#ff6a5c, #d6302c); border-bottom: 4px solid #8f1c1c; }
+body.arcade .btn-ghost { background: transparent; box-shadow: none; }
+body.arcade .dock { background: linear-gradient(#162a5e, #0f1d45); border-top: 2px solid #2f4a8f; box-shadow: 0 -8px 24px rgba(0, 0, 0, .35); }
+body.arcade .dock .main-actions .btn { font-size: 18px; min-height: 56px; }
+body.arcade .pchip { background: linear-gradient(#1e3470, #142352); border-color: #30478a; color: #fff; }
+body.arcade .pchip.cur { border-color: var(--gold); box-shadow: 0 0 16px rgba(255, 204, 51, .5), 0 0 0 3px rgba(255, 204, 51, .25); }
+body.arcade .pchip .pcash { color: #ffd86b; font-weight: 600; }
+body.arcade .feed { color: #a9b8dd; } body.arcade .feed div:first-child { color: #fff; }
+body.arcade .card-panel, body.arcade .modal .sheet { background: linear-gradient(#182c66, #112150); border: 1px solid #2f4a8f; box-shadow: var(--shadow); }
+body.arcade .input { background: #0d1a40; border-color: #2d4280; color: #fff; }
+body.arcade .seg { border-color: #2d4280; background: #0d1a40; } body.arcade .seg button.on { background: linear-gradient(#ffe066, #ffb300); color: #241700; font-weight: 700; }
+body.arcade .player-row, body.arcade .item { background: #0f1d45; border-color: #2d4280; }
+body.arcade .logo-band { box-shadow: 4px 6px 0 var(--gold), 0 14px 30px rgba(0, 0, 0, .5); }
+body.arcade .code-big { background: #0d1a40; border-color: #2d4280; color: #ffd86b; }
+body.arcade .toast { background: #1d3270; border: 1px solid #3d5aa8; }
+body.arcade .deed { color: #15212c; }
+body.arcade .token-grid button { background: #0f1d45; border-color: #2d4280; color: #fff; } body.arcade .token-grid button.on { border-color: var(--gold); background: #2a3f80; }
+body.arcade .token-pick { background: radial-gradient(circle at 35% 30%, #fff1b0, var(--gold) 70%); }
+
+/* ---------- рейтинг ---------- */
+.rating-table td.place { width: 2.2em; font-weight: 700; color: var(--gold-deep); } body.arcade .rating-table td.place { color: var(--gold); }
+.rating-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.rating-table tr.off { opacity: .5; }
+.rating-table .tok { display: inline-grid; vertical-align: middle; width: 28px; height: 28px; margin-right: 4px; }
+
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
 <script>window.PONOPOLY_CONFIG = {"serverUrl":"","botName":"","appName":""};</script>
@@ -375,12 +433,14 @@ a { color: var(--accent); }
       <p class="tagline">Настолка из фильма «Не грози Южному Централу, попивая сок у себя в квартале».</p>
       <div class="fine" id="menu-user"></div>
       <div class="lang-row"><span class="fine">Названия на доске</span><div class="seg" id="lang-seg"><button data-lang="en">Как в фильме</button><button data-lang="ru">Полностью по-русски</button></div></div>
+      <div class="lang-row"><span class="fine">Вид</span><div class="seg" id="style-seg"><button data-style="3d">3D-аркада</button><button data-style="flat">Как реквизит</button></div></div>
     </div>
     <div class="menu-list">
       <button class="btn btn-gold" id="btn-continue" hidden>▶ Продолжить партию</button>
       <button class="btn btn-gold" id="btn-rejoin" hidden>↩ Вернуться в онлайн-комнату</button>
       <button class="btn btn-primary" id="btn-new">🎲 Новая игра: с ботами или вместе на одном экране</button>
       <button class="btn" id="btn-online">🌐 Онлайн с друзьями</button>
+      <button class="btn" id="btn-rating">🏆 Общий рейтинг</button>
       <button class="btn" id="btn-rules">📖 Правила</button>
     </div>
     <p class="fine" id="menu-fine-en">Watts, Crenshaw, Roscoe's, Tax Evasion, Drive-By, No Chance, Community Service, Disconnect Notice — всё как на той самой доске. Нужна вся цветовая группа, чтобы строить хаты и особняки.</p>
@@ -450,6 +510,15 @@ a { color: var(--accent); }
       <p class="fine" id="lobby-wait" hidden>Ждём, когда хост начнёт игру…</p>
       <button class="btn btn-ghost" id="btn-leave-room">Выйти из комнаты</button>
     </div>
+  </div>
+</section>
+
+<!-- РЕЙТИНГ -->
+<section class="screen" id="screen-rating">
+  <div class="wrap">
+    <div class="row between"><button class="btn btn-sm" data-back>‹ Назад</button><h2 style="margin:0">Общий рейтинг</h2><span></span></div>
+    <div class="card-panel"><h3>Онлайн, все комнаты</h3><div id="rating-online"></div></div>
+    <div class="card-panel"><h3>На этом устройстве</h3><div id="rating-local"></div><p class="fine">Победитель получает по 20 очков за каждого соперника, остальные теряют 20. Стартовый рейтинг 1000.</p></div>
   </div>
 </section>
 
@@ -744,6 +813,10 @@ const RU = {
   }
 };
 
+// ===== figures.js =====
+// Сгенерировано tools/figures.mjs из assets/figures/*.svg — не редактировать вручную.
+const FIGURES = {};
+
 // ===== data.js =====
 // Po'Nopoly — board data, cards, tokens, localisation helpers.
 // The board follows the prop seen in the unrated cut of "Don't Be a Menace to South
@@ -896,14 +969,14 @@ const CARD_BY_ID = Object.fromEntries([...CHANCE, ...CHEST].map((c) => [c.id, c]
 
 // Gold-coloured tokens like the ones on the prop (a lowrider, a pager, a bullet casing…).
 const TOKENS = [
-  { id: 'lowrider', emoji: '🚗', name: 'Лоурайдер' },
-  { id: 'pager',    emoji: '📟', name: 'Пейджер' },
-  { id: 'boombox',  emoji: '📻', name: 'Бумбокс' },
-  { id: 'sneaker',  emoji: '👟', name: 'Кроссовок' },
-  { id: 'chicken',  emoji: '🍗', name: 'Курица' },
-  { id: 'chain',    emoji: '⛓️', name: 'Цепь' },
-  { id: 'cap',      emoji: '🧢', name: 'Кепка' },
-  { id: 'bottle',   emoji: '🍾', name: 'Бутылка' },
+  { id: 'gangsta',   emoji: '🕶️', name: 'Гангста',   desc: 'Южный Централ: бандана, белая футболка, цепь' },
+  { id: 'professor', emoji: '🧪', name: 'Профессор', desc: 'Халат, бабочка, колба' },
+  { id: 'gopnik',    emoji: '🧢', name: 'Гопник',    desc: 'Спортивный костюм, кепка, минералка' },
+  { id: 'vatnik',    emoji: '🧥', name: 'Ватник',    desc: 'Телогрейка, ушанка, валенки' },
+  { id: 'cholo',     emoji: '🪢', name: 'Чоло',      desc: 'Восточный ЛА: фланель, бандана, очки' },
+  { id: 'vato',      emoji: '📻', name: 'Вато',      desc: 'Майка, сетка для волос, усы' },
+  { id: 'roadman',   emoji: '🧣', name: 'Роудмен',   desc: 'Лондон: пуховик, кепка, сумка через грудь' },
+  { id: 'cockney',   emoji: '🎩', name: 'Кокни',     desc: 'Лондон 1920-х: твидовая кепка, тройка, трость' },
 ];
 
 const PLAYER_COLORS = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#8e24aa', '#fb8c00'];
@@ -1876,6 +1949,39 @@ function deserialize(json) {
   return st;
 }
 
+// ===== rating.js =====
+// Общий рейтинг: простой Эло-подобный счёт. Победитель получает 20 очков за каждого
+// соперника, остальные теряют по 20 (не ниже 100). Хранится по имени игрока
+// (локально — в настройках устройства, онлайн — на сервере в ratings.json).
+const RATING_START = 1000;
+
+function ratingKey(p) { return (p.uid ? `u${p.uid}` : `n:${String(p.name || '').trim().toLowerCase()}`); }
+
+function applyGameResult(stats, st, now = Date.now()) {
+  const players = st.players;
+  const n = players.length;
+  for (const p of players) {
+    const k = ratingKey(p);
+    const s = stats[k] || { name: p.name, rating: RATING_START, games: 0, wins: 0, bot: !!p.bot };
+    s.games += 1;
+    if (p.id === st.winner) { s.wins += 1; s.rating += 20 * (n - 1); }
+    else s.rating = Math.max(100, s.rating - 20);
+    s.name = p.name; s.bot = !!p.bot; s.last = now;
+    stats[k] = s;
+  }
+  return stats;
+}
+
+function sortedRatings(stats) {
+  return Object.entries(stats).map(([key, s]) => ({ key, ...s })).sort((a, b) => b.rating - a.rating || b.wins - a.wins || a.name.localeCompare(b.name));
+}
+
+// Текущая таблица партии: по общей стоимости имущества.
+function standings(st, netWorth) {
+  return st.players.map((p) => ({ id: p.id, name: p.name, bot: p.bot, bankrupt: p.bankrupt, worth: p.bankrupt ? -1 : netWorth(st, p.id), cash: p.cash }))
+    .sort((a, b) => b.worth - a.worth);
+}
+
 // ===== bot.js =====
 // Простые, но вменяемые боты. Работают и в браузере, и на сервере.
 
@@ -2322,14 +2428,15 @@ class Online {
       case 'state': this.state = msg.state; this.emit('state', { state: msg.state, events: msg.events || [] }); break;
       case 'error': this.emit('error', msg.msg); break;
       case 'kicked': this.forget(); this.emit('kicked'); break;
+      case 'ratings': this.emit('ratings', msg.list || []); break;
       case 'hello': break;
       default: break;
     }
   }
 
   send(obj) { if (this.ws && this.ws.readyState === 1) this.ws.send(JSON.stringify(obj)); }
-  create(name, token) { this.send({ t: 'create', name, token }); }
-  join(code, name, token) { this.send({ t: 'join', code: String(code).toUpperCase(), name, token }); }
+  create(name, token, uid) { this.send({ t: 'create', name, token, uid }); }
+  join(code, name, token, uid) { this.send({ t: 'join', code: String(code).toUpperCase(), name, token, uid }); }
   rejoin(sess) { this.code = sess.code; this.you = sess.pid; this.secret = sess.secret; this.send({ t: 'rejoin', code: sess.code, pid: sess.pid, secret: sess.secret }); }
   start() { this.send({ t: 'start' }); }
   addBot() { this.send({ t: 'add_bot' }); }
@@ -2348,10 +2455,14 @@ class Online {
 
 
 
+
 const $ = (sel, root = document) => root.querySelector(sel);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = (n) => `$${Number(n).toLocaleString('ru-RU')}`;
 const tokenOf = (id) => TOKENS.find((t) => t.id === id) || TOKENS[0];
+// Фигурка игрока: inline SVG из assets/figures, иначе эмодзи-заглушка.
+const figureHtml = (tokenId) => FIGURES[tokenId] ? `<div class="fig">${FIGURES[tokenId]}</div>` : `<div class="fig fig-emoji"><span>${tokenOf(tokenId).emoji}</span></div>`;
+const tokenFace = (tokenId) => `<span class="tok">${figureHtml(tokenId)}</span>`;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const reduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -2448,12 +2559,12 @@ function buildBoard(boardEl, lang = 'en') {
     <div class="fineprint">${lang === 'ru' ? 'Пародийная настолка по мотивам фильма «Не грози Южному Централу». Любое сходство с настоящими районами — не случайность.' : 'A parody board game inspired by the hood. Any resemblance to real neighborhoods is entirely intentional.'}</div>
     <div class="deck chance"><span>${esc(term(lang, 'chance'))}</span></div>
     <div class="deck chest"><span>${esc(term(lang, 'chest'))}</span></div>
-    <div class="center-bottom"><div class="dice" id="dice"><div class="die" data-v="0">${'<span></span>'.repeat(9)}</div><div class="die" data-v="0">${'<span></span>'.repeat(9)}</div></div><div class="status" id="board-status">Бросай кубики</div></div>`;
+    <div class="center-bottom"><div class="dice" id="dice">${dieHtml()}${dieHtml()}</div><div class="status" id="board-status">Бросай кубики</div></div>`;
   boardEl.appendChild(center);
   const tokens = document.createElement('div');
   tokens.className = 'tokens'; tokens.id = 'tokens';
   boardEl.appendChild(tokens);
-  return { boardEl, cells, center, tokens, dice: center.querySelectorAll('.die'), status: $('#board-status', center), lang };
+  return { boardEl, cells, center, tokens, dice: center.querySelectorAll('.die3d'), status: $('#board-status', center), lang };
 }
 
 // Позиция клетки в сетке (SIDE клеток на сторону вместе с углом). GO — правый нижний угол,
@@ -2465,6 +2576,19 @@ function gridPos(i) {
   if (side === 1) return k === 0 ? { row: G, col: 1, side: 'corner' } : { row: G - k, col: 1, side: 'side-left' };
   if (side === 2) return k === 0 ? { row: 1, col: 1, side: 'corner' } : { row: 1, col: 1 + k, side: 'side-top' };
   return k === 0 ? { row: 1, col: G, side: 'corner' } : { row: 1 + k, col: G, side: 'side-right' };
+}
+
+// Кубик как настоящий: шесть граней, крутится в 3D и ложится нужной гранью вверх.
+function dieHtml() {
+  const face = (v) => `<div class="face" data-f="${v}"><div class="pips" data-v="${v}">${'<span></span>'.repeat(9)}</div></div>`;
+  return `<div class="die3d" data-v="0" data-spin="0">${[1, 2, 3, 4, 5, 6].map(face).join('')}</div>`;
+}
+const DIE_ROT = { 1: [0, 0], 2: [0, -90], 3: [-90, 0], 4: [90, 0], 5: [0, 90], 6: [0, 180] };
+function setDie(el, v, spin = false) {
+  const [x, y] = DIE_ROT[v] || [0, 0];
+  const n = spin ? (Number(el.dataset.spin || 0) + 1) : Number(el.dataset.spin || 0);
+  el.dataset.spin = n; el.dataset.v = v;
+  el.style.transform = `rotateX(${720 * n + x}deg) rotateY(${720 * n + y}deg)`;
 }
 
 function mascotSvg() {
@@ -2496,7 +2620,7 @@ function renderBoard(st, refs) {
       band.innerHTML = ps.houses === MAX_HOUSES ? '<i class="house hotel"></i>' : '<i class="house"></i>'.repeat(ps.houses);
     }
   }
-  if (st.dice) refs.dice.forEach((d, i) => d.dataset.v = st.dice[i]);
+  if (st.dice) refs.dice.forEach((d, i) => { if (Number(d.dataset.v) !== st.dice[i]) setDie(d, st.dice[i]); });
 }
 
 function highlightCell(refs, idx) {
@@ -2509,14 +2633,15 @@ function ensureTokens(st, refs) {
   const layer = refs.tokens;
   const seen = new Set();
   for (const p of st.players) {
-    let el = layer.querySelector(`[data-pid="${p.id}"]`);
+    let el = layer.querySelector(`.tok[data-pid="${p.id}"]`);
     if (!el) {
+      const sh = document.createElement('div'); sh.className = 'tokshadow'; sh.dataset.pid = p.id; layer.appendChild(sh);
       el = document.createElement('div');
-      el.className = 'tok'; el.dataset.pid = p.id;
-      el.textContent = tokenOf(p.token).emoji;
+      el.className = 'tok'; el.dataset.pid = p.id; el.dataset.token = p.token;
+      el.innerHTML = figureHtml(p.token);
       el.title = p.name;
       layer.appendChild(el);
-    }
+    } else if (el.dataset.token !== p.token) { el.dataset.token = p.token; el.innerHTML = figureHtml(p.token); }
     el.style.setProperty('--pc', playerColor(st, p.id));
     el.classList.toggle('out', !!p.bankrupt);
     el.classList.toggle('cur', !p.bankrupt && current(st).id === p.id && st.phase !== PHASE.OVER);
@@ -2525,17 +2650,16 @@ function ensureTokens(st, refs) {
   for (const el of [...layer.children]) if (!seen.has(el.dataset.pid)) el.remove();
 }
 
+// Центр клетки в координатах доски (offset-значения не зависят от 3D-трансформаций).
 function cellCenter(refs, idx) {
-  const b = refs.boardEl.getBoundingClientRect();
-  const c = refs.cells[idx].getBoundingClientRect();
-  return { x: c.left - b.left + c.width / 2, y: c.top - b.top + c.height / 2, w: c.width, h: c.height };
+  const c = refs.cells[idx];
+  return { x: c.offsetLeft + c.offsetWidth / 2, y: c.offsetTop + c.offsetHeight / 2, w: c.offsetWidth, h: c.offsetHeight };
 }
 
 // overrides: {pid: idx} — временная позиция во время анимации
 function positionTokens(st, refs, overrides = {}) {
   ensureTokens(st, refs);
-  const tokEl = refs.tokens.querySelector('.tok');
-  const size = tokEl ? tokEl.getBoundingClientRect().width || 20 : 20;
+  const unit = refs.boardEl.offsetWidth / 14.1;
   const groups = {};
   for (const p of st.players) {
     const idx = overrides[p.id] != null ? overrides[p.id] : p.pos;
@@ -2543,19 +2667,18 @@ function positionTokens(st, refs, overrides = {}) {
   }
   for (const [idx, ps] of Object.entries(groups)) {
     const c = cellCenter(refs, Number(idx));
-    const sq = BOARD[Number(idx)];
-    const vertical = gridPos(sq.i).side === 'side-bottom' || gridPos(sq.i).side === 'side-top';
+    const n = ps.length;
     ps.forEach((p, k) => {
-      const el = refs.tokens.querySelector(`[data-pid="${p.id}"]`);
+      const el = refs.tokens.querySelector(`.tok[data-pid="${p.id}"]`);
+      const sh = refs.tokens.querySelector(`.tokshadow[data-pid="${p.id}"]`);
       if (!el) return;
-      const n = ps.length;
-      let dx = 0, dy = 0;
-      if (n > 1) {
-        const step = size * 0.55;
-        if (vertical) { dy = (k - (n - 1) / 2) * step; dx = (k % 2 ? 1 : -1) * size * 0.18; }
-        else { dx = (k - (n - 1) / 2) * step; dy = (k % 2 ? 1 : -1) * size * 0.18; }
-      }
-      el.style.transform = `translate(${c.x - size / 2 + dx}px, ${c.y - size / 2 + dy}px)`;
+      const w = el.offsetWidth || unit, h = el.offsetHeight || unit * 1.5;
+      const dx = n > 1 ? (k - (n - 1) / 2) * unit * 0.42 : 0;
+      const dy = n > 1 ? (k % 2 ? 1 : -1) * unit * 0.12 : 0;
+      const bx = c.x + dx, by = c.y + unit * 0.25 + dy; // точка опоры — чуть ниже центра клетки
+      el.style.transform = `translate(${bx - w / 2}px, ${by - h}px) rotateX(calc(var(--tilt, 0deg) * -1))`;
+      el.style.zIndex = String(10 + Math.round(by));
+      if (sh) sh.style.transform = `translate(${bx - unit * 0.35}px, ${by - unit * 0.12}px)`;
     });
   }
 }
@@ -2580,8 +2703,8 @@ async function animateMove(st, refs, ev) {
 }
 
 async function animateDice(refs, dice) {
-  refs.dice.forEach((d, i) => { d.classList.remove('rolling'); void d.offsetWidth; d.classList.add('rolling'); d.dataset.v = dice[i]; });
-  if (!reduced()) await sleep(450);
+  refs.dice.forEach((d, i) => setDie(d, dice[i], !reduced()));
+  if (!reduced()) await sleep(900);
 }
 
 // ---------- player strip ----------
@@ -2778,7 +2901,7 @@ function taxHtml(st) {
   const p = current(st);
   const sq = BOARD[p.pos];
   const pct = Math.floor(netWorth(st, p.id) * sq.percent / 100);
-  return `<h2>${esc(term(st, 'tax'))}</h2><div class="sub">Налоговая всё-таки нашла ${esc(p.name)}. Общая стоимость имущества: ${money(netWorth(st, p.id))}.</div>
+  return `<h2>${esc(term(st, 'tax'))}</h2><div class="sub">Налоговая всё-таки добралась до игрока ${esc(p.name)}. Общая стоимость имущества: ${money(netWorth(st, p.id))}.</div>
     <div class="actions"><button class="btn btn-primary" data-act="tax" data-mode="flat">Заплатить ${money(sq.amount)}</button><button class="btn ${pct < sq.amount ? 'btn-gold' : ''}" data-act="tax" data-mode="percent">Заплатить ${sq.percent}% = ${money(pct)}</button></div>`;
 }
 
@@ -2880,10 +3003,12 @@ function rulesHtml(lang = 'en') {
   </div>`;
 }
 
-const UI = { playerColor, pname, dnTag, buildBoard, renderBoard, highlightCell, ensureTokens, positionTokens, animateMove, animateDice, renderStrip, renderDock, renderFeed, currentModal, openModal, closeModal, isModalOpen, toast, confirmDialog, promptNumber, squareHtml, cardHtml, taxHtml, auctionHtml, incomingTradeHtml, colorOf, propItemHtml, manageHtml, playerHtml, logHtml, tradeBuilderHtml, gameOverHtml, rulesHtml, $, esc, money, tokenOf, sleep, ICON_BY_SQUARE };
+const UI = { playerColor, pname, dnTag, buildBoard, setDie, renderBoard, highlightCell, ensureTokens, positionTokens, animateMove, animateDice, renderStrip, renderDock, renderFeed, currentModal, openModal, closeModal, isModalOpen, toast, confirmDialog, promptNumber, squareHtml, cardHtml, taxHtml, auctionHtml, incomingTradeHtml, colorOf, propItemHtml, manageHtml, playerHtml, logHtml, tradeBuilderHtml, gameOverHtml, rulesHtml, $, esc, money, tokenOf, figureHtml, tokenFace, sleep, ICON_BY_SQUARE };
 
 // ===== main.js =====
 // Po'Nopoly — контроллер приложения: экраны, локальная игра с ботами, онлайн-комнаты, Telegram.
+
+
 
 
 
@@ -2945,6 +3070,7 @@ function renderMenu() {
   document.querySelectorAll('#lang-seg button').forEach((b) => b.classList.toggle('on', b.dataset.lang === lang));
   $('#menu-fine-en').hidden = lang !== 'en';
   $('#menu-fine-ru').hidden = lang !== 'ru';
+  applyStyle();
   const cfg = window.PONOPOLY_CONFIG || {};
   $('#btn-online').hidden = !!cfg.disableOnline;
   if (cfg.disableOnline) $('#btn-rejoin').hidden = true;
@@ -2953,6 +3079,14 @@ function renderMenu() {
 // ---------- настройка локальной игры ----------
 function defaultName() { const u = tgUser(); return u ? u.name : (getPref('name', '') || 'Ты'); }
 function prefLang() { const l = getPref('lang', 'en'); return LANGS.includes(l) ? l : 'en'; }
+function pref3d() { return getPref('style3d', true) !== false; }
+function applyStyle() {
+  const on = pref3d();
+  document.body.classList.toggle('arcade', on);
+  $('#screen-game').classList.toggle('view-3d', on);
+  document.querySelectorAll('#style-seg button').forEach((b) => b.classList.toggle('on', (b.dataset.style === '3d') === on));
+  if (app.st && app.screen === 'game' && app.refs) requestAnimationFrame(() => UI.positionTokens(app.st, app.refs));
+}
 // Переименовать ботов с «именами по умолчанию» при смене языка доски.
 function renameDefaultBots(list, lang) {
   const all = [BOT_NAMES, RU.bots];
@@ -2979,7 +3113,7 @@ function renderSetup() {
   app.setupPlayers.forEach((p, i) => {
     const row = document.createElement('div');
     row.className = 'player-row';
-    row.innerHTML = `<button class="token-pick gold" title="Фишка">${tokenOf(p.token).emoji}</button>
+    row.innerHTML = `<button class="token-pick gold" title="Фишка">${UI.figureHtml(p.token)}</button>
       <input class="input" value="${esc(p.name)}" maxlength="20" placeholder="Имя" aria-label="Имя игрока">
       <div class="seg"><button class="${p.bot ? '' : 'on'}" data-t="h">Человек</button><button class="${p.bot ? 'on' : ''}" data-t="b">Бот</button></div>
       <button class="btn btn-xs btn-ghost" title="Убрать" ${app.setupPlayers.length <= 2 ? 'disabled' : ''}>✕</button>`;
@@ -2998,7 +3132,7 @@ function renderSetup() {
 
 function pickToken(i, onPick) {
   const used = new Set((app.setupPlayers || []).filter((_, k) => k !== i).map((p) => p.token));
-  const sheet = openModal(`<h2>Фишка</h2><div class="token-grid">${TOKENS.map((t) => `<button data-token="${t.id}" ${used.has(t.id) ? 'disabled' : ''}><span class="e">${t.emoji}</span>${esc(t.name)}</button>`).join('')}</div>`, { kind: 'token' });
+  const sheet = openModal(`<h2>Фишка</h2><div class="token-grid figs">${TOKENS.map((t) => `<button data-token="${t.id}" title="${esc(t.desc || '')}" ${used.has(t.id) ? 'disabled' : ''}>${UI.figureHtml(t.id)}<span>${esc(t.name)}</span></button>`).join('')}</div>`, { kind: 'token' });
   sheet.querySelectorAll('[data-token]').forEach((b) => b.addEventListener('click', () => {
     if (onPick) onPick(b.dataset.token); else { app.setupPlayers[i].token = b.dataset.token; renderSetup(); }
     closeModal();
@@ -3077,7 +3211,7 @@ async function playEvents(ev) {
       case 'buy': haptic('success'); break;
       case 'rent': if (e.amount > 0) toast(`${UI.pname(st, e.from)} платит ${money(e.amount)} → ${UI.pname(st, e.to)}`); break;
       case 'bankrupt': toast(`${UI.pname(st, e.pid)} — банкрот`, 'err'); haptic('warning'); break;
-      case 'winner': haptic('success'); break;
+      case 'winner': haptic('success'); if (app.mode === 'local' && !st.rated) { st.rated = true; const stats = applyGameResult(getPref('stats', {}) || {}, st); setPref('stats', stats); } break;
       case 'trade_done': toast('Сделка состоялась', 'ok'); break;
       case 'trade_rejected': toast('Сделка отклонена'); break;
       case 'turn': {
@@ -3239,6 +3373,8 @@ function showGameMenu() {
   const sheet = openModal(`<h2>Меню</h2><div class="list">
     <button class="btn" data-m="rules">Правила</button>
     <button class="btn" data-m="fast">${getPref('fast', false) ? '✓ ' : ''}Быстрые боты</button>
+    <button class="btn" data-m="table">🏆 Таблица партии</button>
+    <button class="btn" data-m="style">Вид: ${pref3d() ? '3D-аркада → реквизит' : 'реквизит → 3D-аркада'}</button>
     <button class="btn" data-m="lang" ${app.mode === 'online' ? 'disabled' : ''}>Доска: ${langOf(st) === 'ru' ? 'полностью по-русски' : 'как в фильме'} → ${langOf(st) === 'ru' ? 'как в фильме' : 'по-русски'}${app.mode === 'online' ? ' (задаёт хост)' : ''}</button>
     ${canSurrender ? `<button class="btn btn-danger" data-m="surrender">Сдаться (${esc(UI.pname(st, v))})</button>` : ''}
     <button class="btn" data-m="leave">${app.mode === 'online' ? 'Выйти из комнаты' : 'В главное меню'}</button>
@@ -3249,6 +3385,8 @@ function showGameMenu() {
     if (m === 'rules') { openModal(UI.rulesHtml(langOf(st)) + '<div class="actions"><button class="btn" data-close="1">Закрыть</button></div>', { kind: 'rules' }).addEventListener('click', (ev) => { if (ev.target.closest('[data-close]')) closeModal(); }); }
     if (m === 'lang' && app.mode === 'local') { st.settings.lang = langOf(st) === 'ru' ? 'en' : 'ru'; setPref('lang', st.settings.lang); renameDefaultBots(st.players, st.settings.lang); sync(); persist(); toast(st.settings.lang === 'ru' ? 'Доска полностью по-русски. Старые записи журнала остаются как были.' : 'Доска как в фильме. Старые записи журнала остаются как были.'); }
     if (m === 'fast') { setPref('fast', !getPref('fast', false)); toast(getPref('fast', false) ? 'Боты ходят быстро' : 'Боты ходят спокойно'); }
+    if (m === 'style') { setPref('style3d', !pref3d()); applyStyle(); }
+    if (m === 'table') showStandings();
     if (m === 'surrender' && await confirmDialog(`${UI.pname(st, v)}, точно сдаёшься?`, 'Сдаюсь', true)) dispatch({ type: 'surrender', pid: v });
     if (m === 'leave') await leaveGamePrompt();
   });
@@ -3315,7 +3453,7 @@ function renderOnline() {
   const o = app.online;
   const lobby = $('#online-lobby'); const join = $('#online-join');
   $('#online-name').value = $('#online-name').value || defaultName();
-  $('#online-token').textContent = tokenOf(onlineToken).emoji;
+  $('#online-token').innerHTML = UI.figureHtml(onlineToken);
   $('#online-url').value = getPref('serverUrl', '') || (window.PONOPOLY_CONFIG && window.PONOPOLY_CONFIG.serverUrl) || '';
   $('#online-url').placeholder = defaultServerUrl() || 'wss://example.com/ws';
   if (!o || !o.code || !o.room) { lobby.hidden = true; join.hidden = false; return; }
@@ -3323,7 +3461,7 @@ function renderOnline() {
   const room = o.room;
   const isHost = room.host === o.you;
   $('#lobby-code').textContent = room.code;
-  $('#lobby-players').innerHTML = room.players.map((p) => `<div class="item"><span class="tok" style="font-size:20px">${tokenOf(p.token).emoji}</span><div class="t">${esc(p.name)}${p.id === room.host ? ' <span class="crown" title="Хост">👑</span>' : ''}${p.bot ? ' 🤖' : ''}${p.id === o.you ? ' <small>(ты)</small>' : ''}${!p.connected ? ' <small class="dn">не в сети</small>' : ''}</div>${isHost && p.id !== o.you ? `<button class="btn btn-xs" data-kick="${p.id}">✕</button>` : ''}</div>`).join('');
+  $('#lobby-players').innerHTML = room.players.map((p) => `<div class="item">${UI.tokenFace(p.token)}<div class="t">${esc(p.name)}${p.id === room.host ? ' <span class="crown" title="Хост">👑</span>' : ''}${p.bot ? ' 🤖' : ''}${p.id === o.you ? ' <small>(ты)</small>' : ''}${!p.connected ? ' <small class="dn">не в сети</small>' : ''}</div>${isHost && p.id !== o.you ? `<button class="btn btn-xs" data-kick="${p.id}">✕</button>` : ''}</div>`).join('');
   $('#lobby-players').querySelectorAll('[data-kick]').forEach((b) => b.addEventListener('click', () => o.kick(b.dataset.kick)));
   $('#lobby-host').hidden = !isHost;
   $('#lobby-wait').hidden = isHost;
@@ -3348,11 +3486,12 @@ async function onlineConnect() {
 }
 function onlineName() { const n = ($('#online-name').value || '').trim().slice(0, 20) || 'Игрок'; setPref('name', n); setPref('token', onlineToken); return n; }
 
-async function onlineCreate() { const o = await onlineConnect(); if (o) o.create(onlineName(), onlineToken); }
+const tgUid = () => (tgUser() ? tgUser().id : undefined);
+async function onlineCreate() { const o = await onlineConnect(); if (o) o.create(onlineName(), onlineToken, tgUid()); }
 async function onlineJoin(code) {
   code = (code || $('#online-code').value || '').trim().toUpperCase();
   if (code.length !== 4) { toast('Код комнаты — 4 буквы', 'err'); return; }
-  const o = await onlineConnect(); if (o) o.join(code, onlineName(), onlineToken);
+  const o = await onlineConnect(); if (o) o.join(code, onlineName(), onlineToken, tgUid());
 }
 async function onlineRejoin() {
   const sess = Online.savedSession();
@@ -3360,6 +3499,30 @@ async function onlineRejoin() {
   const o = ensureOnline();
   try { await o.connect(sess.url); o.rejoin(sess); showScreen('online'); renderOnline(); }
   catch (e) { toast('Не удалось вернуться: ' + e.message, 'err'); setPref('online', null); renderMenu(); }
+}
+
+// ---------- рейтинг ----------
+function showStandings() {
+  const st = app.st;
+  const rows = standings(st, netWorth);
+  const sheet = openModal(`<h2>Таблица партии</h2><div class="sub">По общей стоимости имущества на ход ${st.turnNo}</div><table class="stats rating-table">${rows.map((r, i) => `<tr class="${r.bankrupt ? 'off' : ''}"><td class="place">${r.bankrupt ? '—' : i + 1}</td><td>${UI.tokenFace(st.players.find((p) => p.id === r.id).token)} ${esc(r.name)}${r.bot ? ' 🤖' : ''}</td><td>${r.bankrupt ? 'банкрот' : money(r.worth)}</td></tr>`).join('')}</table><div class="actions"><button class="btn" data-close="1">Закрыть</button></div>`, { kind: 'table' });
+  sheet.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeModal(); });
+}
+
+async function renderRating() {
+  const local = sortedRatings(getPref('stats', {}) || {});
+  const table = (rows, empty) => rows.length ? `<table class="stats rating-table">${rows.map((r, i) => `<tr><td class="place">${i + 1}</td><td>${esc(r.name)}${r.bot ? ' 🤖' : ''}</td><td class="num">${r.rating}</td><td class="num">${r.wins}/${r.games}</td></tr>`).join('')}</table>` : `<p class="fine">${empty}</p>`;
+  $('#rating-local').innerHTML = table(local, 'Пока ни одной сыгранной партии на этом устройстве. Доиграй партию до победителя — появится рейтинг.');
+  const el = $('#rating-online');
+  el.innerHTML = '<p class="fine">Загружаем…</p>';
+  const ws = defaultServerUrl();
+  if (!ws || (window.PONOPOLY_CONFIG && window.PONOPOLY_CONFIG.disableOnline)) { el.innerHTML = '<p class="fine">Онлайн-рейтинг доступен, когда настроен сервер комнат.</p>'; return; }
+  try {
+    const http = ws.replace(/^ws/, 'http').replace(/\/ws\/?$/, '') + '/ratings';
+    const res = await fetch(http, { cache: 'no-store' });
+    const list = await res.json();
+    el.innerHTML = table(list, 'На сервере ещё нет сыгранных онлайн-партий.');
+  } catch (e) { el.innerHTML = '<p class="fine">Сервер рейтинга недоступен.</p>'; }
 }
 
 // ---------- запуск ----------
@@ -3388,6 +3551,8 @@ function bindStatic() {
   $('#btn-leave-room').addEventListener('click', async () => { if (await confirmDialog('Выйти из комнаты?', 'Выйти', true)) { app.online.leave(); renderOnline(); } });
   for (const id of ['lobby-cash', 'lobby-auctions', 'lobby-parking', 'lobby-lang']) $(`#${id}`).addEventListener('change', () => app.online.settings({ startCash: Number($('#lobby-cash').value), auctions: $('#lobby-auctions').checked, freeParkingPool: $('#lobby-parking').checked, lang: $('#lobby-lang').value }));
   document.querySelectorAll('#lang-seg button').forEach((b) => b.addEventListener('click', () => { setPref('lang', b.dataset.lang); renderMenu(); haptic('selection'); }));
+  document.querySelectorAll('#style-seg button').forEach((b) => b.addEventListener('click', () => { setPref('style3d', b.dataset.style === '3d'); applyStyle(); haptic('selection'); }));
+  $('#btn-rating').addEventListener('click', () => { showScreen('rating'); renderRating(); });
   $('#set-lang').addEventListener('change', () => { const l = $('#set-lang').value; renameDefaultBots(app.setupPlayers, l); app.setupSettings.lang = l; renderSetup(); });
   // доска: клик по клетке
   $('#board').addEventListener('click', (e) => { const c = e.target.closest('.cell'); if (c && app.st) showSquare(Number(c.dataset.idx)); });

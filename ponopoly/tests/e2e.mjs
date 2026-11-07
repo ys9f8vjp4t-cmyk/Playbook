@@ -207,7 +207,7 @@ try {
       await pg.click('#dock [data-act="roll"]');
       await pg.waitForTimeout(1500);
       const m = await pg.evaluate(() => {
-        const b = document.querySelector('#board').getBoundingClientRect();
+        const b = document.querySelector('.board-area').getBoundingClientRect();
         const d = document.querySelector('#dock').getBoundingClientRect();
         return { sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, sh: document.documentElement.scrollHeight, ch: document.documentElement.clientHeight, boardBottom: b.bottom, boardRight: b.right, boardW: b.width, dockTop: d.top };
       });

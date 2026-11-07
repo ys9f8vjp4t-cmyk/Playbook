@@ -63,14 +63,15 @@ export class Online {
       case 'state': this.state = msg.state; this.emit('state', { state: msg.state, events: msg.events || [] }); break;
       case 'error': this.emit('error', msg.msg); break;
       case 'kicked': this.forget(); this.emit('kicked'); break;
+      case 'ratings': this.emit('ratings', msg.list || []); break;
       case 'hello': break;
       default: break;
     }
   }
 
   send(obj) { if (this.ws && this.ws.readyState === 1) this.ws.send(JSON.stringify(obj)); }
-  create(name, token) { this.send({ t: 'create', name, token }); }
-  join(code, name, token) { this.send({ t: 'join', code: String(code).toUpperCase(), name, token }); }
+  create(name, token, uid) { this.send({ t: 'create', name, token, uid }); }
+  join(code, name, token, uid) { this.send({ t: 'join', code: String(code).toUpperCase(), name, token, uid }); }
   rejoin(sess) { this.code = sess.code; this.you = sess.pid; this.secret = sess.secret; this.send({ t: 'rejoin', code: sess.code, pid: sess.pid, secret: sess.secret }); }
   start() { this.send({ t: 'start' }); }
   addBot() { this.send({ t: 'add_bot' }); }

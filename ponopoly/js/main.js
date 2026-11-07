@@ -7,6 +7,8 @@ import { initTelegram, tgUser, startParam, haptic, showBack, hideBack, inTelegra
 import { saveGame, loadGame, clearGame, getPref, setPref } from './storage.js';
 import { Online, defaultServerUrl } from './online.js';
 import * as UI from './ui.js';
+import { applyGameResult, sortedRatings, standings } from './rating.js';
+import { netWorth } from './engine.js';
 
 const { $, esc, money, toast, openModal, closeModal, confirmDialog, promptNumber, currentModal, tokenOf } = UI;
 
@@ -62,6 +64,7 @@ function renderMenu() {
   document.querySelectorAll('#lang-seg button').forEach((b) => b.classList.toggle('on', b.dataset.lang === lang));
   $('#menu-fine-en').hidden = lang !== 'en';
   $('#menu-fine-ru').hidden = lang !== 'ru';
+  applyStyle();
   const cfg = window.PONOPOLY_CONFIG || {};
   $('#btn-online').hidden = !!cfg.disableOnline;
   if (cfg.disableOnline) $('#btn-rejoin').hidden = true;
@@ -70,6 +73,14 @@ function renderMenu() {
 // ---------- настройка локальной игры ----------
 function defaultName() { const u = tgUser(); return u ? u.name : (getPref('name', '') || 'Ты'); }
 function prefLang() { const l = getPref('lang', 'en'); return LANGS.includes(l) ? l : 'en'; }
+function pref3d() { return getPref('style3d', true) !== false; }
+function applyStyle() {
+  const on = pref3d();
+  document.body.classList.toggle('arcade', on);
+  $('#screen-game').classList.toggle('view-3d', on);
+  document.querySelectorAll('#style-seg button').forEach((b) => b.classList.toggle('on', (b.dataset.style === '3d') === on));
+  if (app.st && app.screen === 'game' && app.refs) requestAnimationFrame(() => UI.positionTokens(app.st, app.refs));
+}
 // Переименовать ботов с «именами по умолчанию» при смене языка доски.
 function renameDefaultBots(list, lang) {
   const all = [BOT_NAMES, RU.bots];
@@ -96,7 +107,7 @@ function renderSetup() {
   app.setupPlayers.forEach((p, i) => {
     const row = document.createElement('div');
     row.className = 'player-row';
-    row.innerHTML = `<button class="token-pick gold" title="Фишка">${tokenOf(p.token).emoji}</button>
+    row.innerHTML = `<button class="token-pick gold" title="Фишка">${UI.figureHtml(p.token)}</button>
       <input class="input" value="${esc(p.name)}" maxlength="20" placeholder="Имя" aria-label="Имя игрока">
       <div class="seg"><button class="${p.bot ? '' : 'on'}" data-t="h">Человек</button><button class="${p.bot ? 'on' : ''}" data-t="b">Бот</button></div>
       <button class="btn btn-xs btn-ghost" title="Убрать" ${app.setupPlayers.length <= 2 ? 'disabled' : ''}>✕</button>`;
@@ -115,7 +126,7 @@ function renderSetup() {
 
 function pickToken(i, onPick) {
   const used = new Set((app.setupPlayers || []).filter((_, k) => k !== i).map((p) => p.token));
-  const sheet = openModal(`<h2>Фишка</h2><div class="token-grid">${TOKENS.map((t) => `<button data-token="${t.id}" ${used.has(t.id) ? 'disabled' : ''}><span class="e">${t.emoji}</span>${esc(t.name)}</button>`).join('')}</div>`, { kind: 'token' });
+  const sheet = openModal(`<h2>Фишка</h2><div class="token-grid figs">${TOKENS.map((t) => `<button data-token="${t.id}" title="${esc(t.desc || '')}" ${used.has(t.id) ? 'disabled' : ''}>${UI.figureHtml(t.id)}<span>${esc(t.name)}</span></button>`).join('')}</div>`, { kind: 'token' });
   sheet.querySelectorAll('[data-token]').forEach((b) => b.addEventListener('click', () => {
     if (onPick) onPick(b.dataset.token); else { app.setupPlayers[i].token = b.dataset.token; renderSetup(); }
     closeModal();
@@ -194,7 +205,7 @@ async function playEvents(ev) {
       case 'buy': haptic('success'); break;
       case 'rent': if (e.amount > 0) toast(`${UI.pname(st, e.from)} платит ${money(e.amount)} → ${UI.pname(st, e.to)}`); break;
       case 'bankrupt': toast(`${UI.pname(st, e.pid)} — банкрот`, 'err'); haptic('warning'); break;
-      case 'winner': haptic('success'); break;
+      case 'winner': haptic('success'); if (app.mode === 'local' && !st.rated) { st.rated = true; const stats = applyGameResult(getPref('stats', {}) || {}, st); setPref('stats', stats); } break;
       case 'trade_done': toast('Сделка состоялась', 'ok'); break;
       case 'trade_rejected': toast('Сделка отклонена'); break;
       case 'turn': {
@@ -356,6 +367,8 @@ function showGameMenu() {
   const sheet = openModal(`<h2>Меню</h2><div class="list">
     <button class="btn" data-m="rules">Правила</button>
     <button class="btn" data-m="fast">${getPref('fast', false) ? '✓ ' : ''}Быстрые боты</button>
+    <button class="btn" data-m="table">🏆 Таблица партии</button>
+    <button class="btn" data-m="style">Вид: ${pref3d() ? '3D-аркада → реквизит' : 'реквизит → 3D-аркада'}</button>
     <button class="btn" data-m="lang" ${app.mode === 'online' ? 'disabled' : ''}>Доска: ${langOf(st) === 'ru' ? 'полностью по-русски' : 'как в фильме'} → ${langOf(st) === 'ru' ? 'как в фильме' : 'по-русски'}${app.mode === 'online' ? ' (задаёт хост)' : ''}</button>
     ${canSurrender ? `<button class="btn btn-danger" data-m="surrender">Сдаться (${esc(UI.pname(st, v))})</button>` : ''}
     <button class="btn" data-m="leave">${app.mode === 'online' ? 'Выйти из комнаты' : 'В главное меню'}</button>
@@ -366,6 +379,8 @@ function showGameMenu() {
     if (m === 'rules') { openModal(UI.rulesHtml(langOf(st)) + '<div class="actions"><button class="btn" data-close="1">Закрыть</button></div>', { kind: 'rules' }).addEventListener('click', (ev) => { if (ev.target.closest('[data-close]')) closeModal(); }); }
     if (m === 'lang' && app.mode === 'local') { st.settings.lang = langOf(st) === 'ru' ? 'en' : 'ru'; setPref('lang', st.settings.lang); renameDefaultBots(st.players, st.settings.lang); sync(); persist(); toast(st.settings.lang === 'ru' ? 'Доска полностью по-русски. Старые записи журнала остаются как были.' : 'Доска как в фильме. Старые записи журнала остаются как были.'); }
     if (m === 'fast') { setPref('fast', !getPref('fast', false)); toast(getPref('fast', false) ? 'Боты ходят быстро' : 'Боты ходят спокойно'); }
+    if (m === 'style') { setPref('style3d', !pref3d()); applyStyle(); }
+    if (m === 'table') showStandings();
     if (m === 'surrender' && await confirmDialog(`${UI.pname(st, v)}, точно сдаёшься?`, 'Сдаюсь', true)) dispatch({ type: 'surrender', pid: v });
     if (m === 'leave') await leaveGamePrompt();
   });
@@ -432,7 +447,7 @@ function renderOnline() {
   const o = app.online;
   const lobby = $('#online-lobby'); const join = $('#online-join');
   $('#online-name').value = $('#online-name').value || defaultName();
-  $('#online-token').textContent = tokenOf(onlineToken).emoji;
+  $('#online-token').innerHTML = UI.figureHtml(onlineToken);
   $('#online-url').value = getPref('serverUrl', '') || (window.PONOPOLY_CONFIG && window.PONOPOLY_CONFIG.serverUrl) || '';
   $('#online-url').placeholder = defaultServerUrl() || 'wss://example.com/ws';
   if (!o || !o.code || !o.room) { lobby.hidden = true; join.hidden = false; return; }
@@ -440,7 +455,7 @@ function renderOnline() {
   const room = o.room;
   const isHost = room.host === o.you;
   $('#lobby-code').textContent = room.code;
-  $('#lobby-players').innerHTML = room.players.map((p) => `<div class="item"><span class="tok" style="font-size:20px">${tokenOf(p.token).emoji}</span><div class="t">${esc(p.name)}${p.id === room.host ? ' <span class="crown" title="Хост">👑</span>' : ''}${p.bot ? ' 🤖' : ''}${p.id === o.you ? ' <small>(ты)</small>' : ''}${!p.connected ? ' <small class="dn">не в сети</small>' : ''}</div>${isHost && p.id !== o.you ? `<button class="btn btn-xs" data-kick="${p.id}">✕</button>` : ''}</div>`).join('');
+  $('#lobby-players').innerHTML = room.players.map((p) => `<div class="item">${UI.tokenFace(p.token)}<div class="t">${esc(p.name)}${p.id === room.host ? ' <span class="crown" title="Хост">👑</span>' : ''}${p.bot ? ' 🤖' : ''}${p.id === o.you ? ' <small>(ты)</small>' : ''}${!p.connected ? ' <small class="dn">не в сети</small>' : ''}</div>${isHost && p.id !== o.you ? `<button class="btn btn-xs" data-kick="${p.id}">✕</button>` : ''}</div>`).join('');
   $('#lobby-players').querySelectorAll('[data-kick]').forEach((b) => b.addEventListener('click', () => o.kick(b.dataset.kick)));
   $('#lobby-host').hidden = !isHost;
   $('#lobby-wait').hidden = isHost;
@@ -465,11 +480,12 @@ async function onlineConnect() {
 }
 function onlineName() { const n = ($('#online-name').value || '').trim().slice(0, 20) || 'Игрок'; setPref('name', n); setPref('token', onlineToken); return n; }
 
-async function onlineCreate() { const o = await onlineConnect(); if (o) o.create(onlineName(), onlineToken); }
+const tgUid = () => (tgUser() ? tgUser().id : undefined);
+async function onlineCreate() { const o = await onlineConnect(); if (o) o.create(onlineName(), onlineToken, tgUid()); }
 async function onlineJoin(code) {
   code = (code || $('#online-code').value || '').trim().toUpperCase();
   if (code.length !== 4) { toast('Код комнаты — 4 буквы', 'err'); return; }
-  const o = await onlineConnect(); if (o) o.join(code, onlineName(), onlineToken);
+  const o = await onlineConnect(); if (o) o.join(code, onlineName(), onlineToken, tgUid());
 }
 async function onlineRejoin() {
   const sess = Online.savedSession();
@@ -477,6 +493,30 @@ async function onlineRejoin() {
   const o = ensureOnline();
   try { await o.connect(sess.url); o.rejoin(sess); showScreen('online'); renderOnline(); }
   catch (e) { toast('Не удалось вернуться: ' + e.message, 'err'); setPref('online', null); renderMenu(); }
+}
+
+// ---------- рейтинг ----------
+function showStandings() {
+  const st = app.st;
+  const rows = standings(st, netWorth);
+  const sheet = openModal(`<h2>Таблица партии</h2><div class="sub">По общей стоимости имущества на ход ${st.turnNo}</div><table class="stats rating-table">${rows.map((r, i) => `<tr class="${r.bankrupt ? 'off' : ''}"><td class="place">${r.bankrupt ? '—' : i + 1}</td><td>${UI.tokenFace(st.players.find((p) => p.id === r.id).token)} ${esc(r.name)}${r.bot ? ' 🤖' : ''}</td><td>${r.bankrupt ? 'банкрот' : money(r.worth)}</td></tr>`).join('')}</table><div class="actions"><button class="btn" data-close="1">Закрыть</button></div>`, { kind: 'table' });
+  sheet.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeModal(); });
+}
+
+async function renderRating() {
+  const local = sortedRatings(getPref('stats', {}) || {});
+  const table = (rows, empty) => rows.length ? `<table class="stats rating-table">${rows.map((r, i) => `<tr><td class="place">${i + 1}</td><td>${esc(r.name)}${r.bot ? ' 🤖' : ''}</td><td class="num">${r.rating}</td><td class="num">${r.wins}/${r.games}</td></tr>`).join('')}</table>` : `<p class="fine">${empty}</p>`;
+  $('#rating-local').innerHTML = table(local, 'Пока ни одной сыгранной партии на этом устройстве. Доиграй партию до победителя — появится рейтинг.');
+  const el = $('#rating-online');
+  el.innerHTML = '<p class="fine">Загружаем…</p>';
+  const ws = defaultServerUrl();
+  if (!ws || (window.PONOPOLY_CONFIG && window.PONOPOLY_CONFIG.disableOnline)) { el.innerHTML = '<p class="fine">Онлайн-рейтинг доступен, когда настроен сервер комнат.</p>'; return; }
+  try {
+    const http = ws.replace(/^ws/, 'http').replace(/\/ws\/?$/, '') + '/ratings';
+    const res = await fetch(http, { cache: 'no-store' });
+    const list = await res.json();
+    el.innerHTML = table(list, 'На сервере ещё нет сыгранных онлайн-партий.');
+  } catch (e) { el.innerHTML = '<p class="fine">Сервер рейтинга недоступен.</p>'; }
 }
 
 // ---------- запуск ----------
@@ -505,6 +545,8 @@ function bindStatic() {
   $('#btn-leave-room').addEventListener('click', async () => { if (await confirmDialog('Выйти из комнаты?', 'Выйти', true)) { app.online.leave(); renderOnline(); } });
   for (const id of ['lobby-cash', 'lobby-auctions', 'lobby-parking', 'lobby-lang']) $(`#${id}`).addEventListener('change', () => app.online.settings({ startCash: Number($('#lobby-cash').value), auctions: $('#lobby-auctions').checked, freeParkingPool: $('#lobby-parking').checked, lang: $('#lobby-lang').value }));
   document.querySelectorAll('#lang-seg button').forEach((b) => b.addEventListener('click', () => { setPref('lang', b.dataset.lang); renderMenu(); haptic('selection'); }));
+  document.querySelectorAll('#style-seg button').forEach((b) => b.addEventListener('click', () => { setPref('style3d', b.dataset.style === '3d'); applyStyle(); haptic('selection'); }));
+  $('#btn-rating').addEventListener('click', () => { showScreen('rating'); renderRating(); });
   $('#set-lang').addEventListener('change', () => { const l = $('#set-lang').value; renameDefaultBots(app.setupPlayers, l); app.setupSettings.lang = l; renderSetup(); });
   // доска: клик по клетке
   $('#board').addEventListener('click', (e) => { const c = e.target.closest('.cell'); if (c && app.st) showSquare(Number(c.dataset.idx)); });

@@ -150,14 +150,14 @@ export const CARD_BY_ID = Object.fromEntries([...CHANCE, ...CHEST].map((c) => [c
 
 // Gold-coloured tokens like the ones on the prop (a lowrider, a pager, a bullet casing…).
 export const TOKENS = [
-  { id: 'lowrider', emoji: '🚗', name: 'Лоурайдер' },
-  { id: 'pager',    emoji: '📟', name: 'Пейджер' },
-  { id: 'boombox',  emoji: '📻', name: 'Бумбокс' },
-  { id: 'sneaker',  emoji: '👟', name: 'Кроссовок' },
-  { id: 'chicken',  emoji: '🍗', name: 'Курица' },
-  { id: 'chain',    emoji: '⛓️', name: 'Цепь' },
-  { id: 'cap',      emoji: '🧢', name: 'Кепка' },
-  { id: 'bottle',   emoji: '🍾', name: 'Бутылка' },
+  { id: 'gangsta',   emoji: '🕶️', name: 'Гангста',   desc: 'Южный Централ: бандана, белая футболка, цепь' },
+  { id: 'professor', emoji: '🧪', name: 'Профессор', desc: 'Халат, бабочка, колба' },
+  { id: 'gopnik',    emoji: '🧢', name: 'Гопник',    desc: 'Спортивный костюм, кепка, минералка' },
+  { id: 'vatnik',    emoji: '🧥', name: 'Ватник',    desc: 'Телогрейка, ушанка, валенки' },
+  { id: 'cholo',     emoji: '🪢', name: 'Чоло',      desc: 'Восточный ЛА: фланель, бандана, очки' },
+  { id: 'vato',      emoji: '📻', name: 'Вато',      desc: 'Майка, сетка для волос, усы' },
+  { id: 'roadman',   emoji: '🧣', name: 'Роудмен',   desc: 'Лондон: пуховик, кепка, сумка через грудь' },
+  { id: 'cockney',   emoji: '🎩', name: 'Кокни',     desc: 'Лондон 1920-х: твидовая кепка, тройка, трость' },
 ];
 
 export const PLAYER_COLORS = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#8e24aa', '#fb8c00'];

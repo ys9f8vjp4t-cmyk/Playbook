@@ -2,3 +2,4 @@ node_modules/
 tests/shots/
 dist/artifact.html
 .DS_Store
+server/data/

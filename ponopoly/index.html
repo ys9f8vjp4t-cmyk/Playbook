@@ -29,12 +29,14 @@
       <p class="tagline">Настолка из фильма «Не грози Южному Централу, попивая сок у себя в квартале».</p>
       <div class="fine" id="menu-user"></div>
       <div class="lang-row"><span class="fine">Названия на доске</span><div class="seg" id="lang-seg"><button data-lang="en">Как в фильме</button><button data-lang="ru">Полностью по-русски</button></div></div>
+      <div class="lang-row"><span class="fine">Вид</span><div class="seg" id="style-seg"><button data-style="3d">3D-аркада</button><button data-style="flat">Как реквизит</button></div></div>
     </div>
     <div class="menu-list">
       <button class="btn btn-gold" id="btn-continue" hidden>▶ Продолжить партию</button>
       <button class="btn btn-gold" id="btn-rejoin" hidden>↩ Вернуться в онлайн-комнату</button>
       <button class="btn btn-primary" id="btn-new">🎲 Новая игра: с ботами или вместе на одном экране</button>
       <button class="btn" id="btn-online">🌐 Онлайн с друзьями</button>
+      <button class="btn" id="btn-rating">🏆 Общий рейтинг</button>
       <button class="btn" id="btn-rules">📖 Правила</button>
     </div>
     <p class="fine" id="menu-fine-en">Watts, Crenshaw, Roscoe's, Tax Evasion, Drive-By, No Chance, Community Service, Disconnect Notice — всё как на той самой доске. Нужна вся цветовая группа, чтобы строить хаты и особняки.</p>
@@ -104,6 +106,15 @@
       <p class="fine" id="lobby-wait" hidden>Ждём, когда хост начнёт игру…</p>
       <button class="btn btn-ghost" id="btn-leave-room">Выйти из комнаты</button>
     </div>
+  </div>
+</section>
+
+<!-- РЕЙТИНГ -->
+<section class="screen" id="screen-rating">
+  <div class="wrap">
+    <div class="row between"><button class="btn btn-sm" data-back>‹ Назад</button><h2 style="margin:0">Общий рейтинг</h2><span></span></div>
+    <div class="card-panel"><h3>Онлайн, все комнаты</h3><div id="rating-online"></div></div>
+    <div class="card-panel"><h3>На этом устройстве</h3><div id="rating-local"></div><p class="fine">Победитель получает по 20 очков за каждого соперника, остальные теряют 20. Стартовый рейтинг 1000.</p></div>
   </div>
 </section>
 
