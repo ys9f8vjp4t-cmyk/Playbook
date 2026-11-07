@@ -1,0 +1,16 @@
+{
+  "name": "ponopoly",
+  "version": "1.0.0",
+  "description": "Po'Nopoly — Telegram Mini App по мотивам настолки из фильма «Не грози Южному Централу»",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node --test tests/*.test.js",
+    "e2e": "node tests/e2e.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "engines": { "node": ">=18" }
+}

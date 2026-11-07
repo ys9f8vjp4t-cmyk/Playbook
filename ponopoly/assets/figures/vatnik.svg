@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 150">
+<g stroke="#1a2a35" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+<ellipse cx="50" cy="141" rx="30" ry="7.5" fill="#9c7210"/>
+<ellipse cx="50" cy="138.5" rx="30" ry="8" fill="#d9a521"/>
+<path d="M30 66L22 100" stroke-width="16"/>
+<path d="M30 66L22 100" stroke="#8d9096" stroke-width="12"/>
+<path d="M32.5 67L24.5 99" stroke="#6c6f76" stroke-width="3.5"/>
+<path d="M22.6 74q5.5 3 11 0M20.3 84q5.5 3 11 0M17.9 94q5.5 3 11 0" fill="none" stroke="#5c5f66" stroke-width="1.5"/>
+<circle cx="22" cy="104" r="5.5" fill="#f1c9a5"/>
+<rect x="32" y="100" width="17.5" height="22" rx="3" fill="#3b3f4a"/>
+<rect x="50.5" y="100" width="17.5" height="22" rx="3" fill="#3b3f4a"/>
+<rect x="44" y="110" width="4" height="9" fill="#2a2d35" stroke="none"/>
+<rect x="62.5" y="110" width="4" height="9" fill="#2a2d35" stroke="none"/>
+<path d="M34 117H49V131Q49 136 45 136H38Q34 136 34 131Z" fill="#2b2c32"/>
+<path d="M51 117H66V131Q66 136 62 136H55Q51 136 51 131Z" fill="#2b2c32"/>
+<rect x="36" y="120" width="3" height="12" rx="1.5" fill="#4d4e57" stroke="none"/>
+<rect x="53" y="120" width="3" height="12" rx="1.5" fill="#4d4e57" stroke="none"/>
+<rect x="45" y="119" width="3" height="14" rx="1.5" fill="#141519" stroke="none"/>
+<rect x="62" y="119" width="3" height="14" rx="1.5" fill="#141519" stroke="none"/>
+<path d="M34 60L38 53H62L66 60Z" fill="#74777d"/>
+<path d="M33 58H67Q72 58 72.5 63L75.5 106Q76 110 71 110H29Q24 110 24.5 106L27.5 63Q28 58 33 58Z" fill="#8d9096"/>
+<path d="M64 60H70Q71 60 71.2 63L74 106Q74 108.5 71.5 108.5H64Z" fill="#6c6f76" stroke="none"/>
+<path d="M30.5 60H36L33 108.5H28.5Q26 108.5 26 106L29 63Q29 60 30.5 60Z" fill="#a7aab0" stroke="none"/>
+<g fill="none" stroke="#5c5f66" stroke-width="1.5">
+<path d="M29.5 68q5 3 10 0q5 3 10 0q5 3 10 0q5 3 10 0"/>
+<path d="M28.5 78q5.4 3 10.75 0q5.4 3 10.75 0q5.4 3 10.75 0q5.4 3 10.75 0"/>
+<path d="M27.5 88q5.6 3 11.25 0q5.6 3 11.25 0q5.6 3 11.25 0q5.6 3 11.25 0"/>
+<path d="M26.5 98q5.9 3 11.75 0q5.9 3 11.75 0q5.9 3 11.75 0q5.9 3 11.75 0"/>
+<path d="M50 58V110"/>
+</g>
+<circle cx="50" cy="63" r="2" fill="#3a3d44"/>
+<circle cx="50" cy="73" r="2" fill="#3a3d44"/>
+<path d="M70 66L77 84L68 90" stroke-width="16" fill="none"/>
+<path d="M70 66L77 84L68 90" stroke="#8d9096" stroke-width="12" fill="none"/>
+<path d="M72.5 67L78.5 83" stroke="#6c6f76" stroke-width="3.5"/>
+<path d="M67.6 74q5.5 3 11 0M70 80q5.5 3 11 0" fill="none" stroke="#5c5f66" stroke-width="1.5"/>
+<path d="M56 77q-2.5-3 0-6M61 77q2.5-3 0-6" stroke="#dde4ea" fill="none"/>
+<rect x="52" y="81" width="13" height="16" rx="2" fill="#eef2f5"/>
+<rect x="60.5" y="83" width="3.5" height="12.5" fill="#c7d1da" stroke="none"/>
+<rect x="52.5" y="82" width="12" height="3" fill="#2f6aa0" stroke="none"/>
+<ellipse cx="58.5" cy="81" rx="6.5" ry="1.8" fill="#3b7bb5"/>
+<circle cx="68.5" cy="91" r="5.5" fill="#f1c9a5"/>
+<ellipse cx="50" cy="38" rx="19" ry="20" fill="#f1c9a5"/>
+<path d="M57 20Q67 27 67.5 38Q67 49 57 56Q63 49 63.5 38Q63 27 57 20Z" fill="#d8a888" stroke="none"/>
+<ellipse cx="36.5" cy="40" rx="2.5" ry="4.5" fill="#fbe4cf" stroke="none"/>
+<ellipse cx="43.5" cy="40" rx="2.2" ry="3" fill="#1a2a35" stroke="none"/>
+<ellipse cx="56.5" cy="40" rx="2.2" ry="3" fill="#1a2a35" stroke="none"/>
+<path d="M47.5 45.5q2.5 2.5 5 0" fill="none"/>
+<path d="M45.5 50q4.5 4 9 0" fill="none"/>
+<path d="M27 28L25 52Q25 57 30 57H36Q39 57 39 53L38 30Z" fill="#8c7a68"/>
+<path d="M73 28L75 52Q75 57 70 57H64Q61 57 61 53L62 30Z" fill="#8c7a68"/>
+<rect x="28.5" y="34" width="3" height="16" rx="1.5" fill="#a89684" stroke="none"/>
+<rect x="68.5" y="34" width="4" height="18" rx="2" fill="#6f5f50" stroke="none"/>
+<path d="M30 32Q30 12 50 11Q70 12 70 32Z" fill="#4e4740"/>
+<path d="M52 13Q66.5 15 68 31H64Q63.5 18 52 13Z" fill="#3a3530" stroke="none"/>
+<ellipse cx="40" cy="21" rx="3.5" ry="5.5" fill="#655c53" stroke="none"/>
+<path d="M30 24Q50 18 70 24V33q-5 4-10 0q-5 4-10 0q-5 4-10 0q-5 4-10 0Z" fill="#8c7a68"/>
+<rect x="62" y="25.5" width="6.5" height="7" fill="#6f5f50" stroke="none"/>
+<ellipse cx="36" cy="28" rx="3.5" ry="2.5" fill="#a89684" stroke="none"/>
+</g>
+</svg>
