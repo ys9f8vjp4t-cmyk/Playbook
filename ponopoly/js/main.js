@@ -93,9 +93,9 @@ function renameDefaultBots(list, lang) {
 function initSetup() {
   const names = botNames(prefLang());
   app.setupPlayers = [
-    { name: defaultName(), token: 'lowrider', bot: false },
-    { name: names[1], token: 'pager', bot: true },
-    { name: names[0], token: 'boombox', bot: true },
+    { name: defaultName(), token: 'gangsta', bot: false },
+    { name: names[1], token: 'gopnik', bot: true },
+    { name: names[0], token: 'roadman', bot: true },
   ];
   app.setupSettings = { ...DEFAULT_SETTINGS, ...(getPref('settings', {}) || {}), lang: prefLang() };
   renderSetup();
@@ -442,7 +442,7 @@ function ensureOnline() {
 }
 function setConn(text, bad) { const el = $('#conn'); if (el) { el.textContent = text; el.classList.toggle('bad', !!bad); } }
 
-let onlineToken = getPref('token', 'lowrider');
+let onlineToken = TOKENS.some((t) => t.id === getPref('token', '')) ? getPref('token', '') : 'gangsta';
 function renderOnline() {
   const o = app.online;
   const lobby = $('#online-lobby'); const join = $('#online-join');
